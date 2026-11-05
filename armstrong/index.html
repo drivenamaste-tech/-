@@ -327,6 +327,7 @@ label.f input,label.f select,label.f textarea{display:block;width:100%;margin-to
         <button class="btn primary" id="eEnd">終わって講評へ</button>
       </div>
       <p class="hint" id="eNote">Ctrl+Enter（Macは⌘+Enter）でも送信できます。会話はこのページの中だけで使い、保存しません。個人情報は入力しないでください。</p>
+      <p class="hint" style="margin:0">「終わって講評へ」を押すと会話はその場で消え、講評のあと自動でアプリのトップに戻ります。</p>
     </div>
   </section>
   <section class="panel" id="eReport" hidden></section>
@@ -343,7 +344,7 @@ label.f input,label.f select,label.f textarea{display:block;width:100%;margin-to
       <button class="btn primary grow" id="send">アームストロングに聞く</button>
       <button class="btn ghost" id="mic" aria-pressed="false">🎤 音声で入力</button>
     </div>
-    <div class="askrow"><button class="btn ghost grow" id="enTripStart">🇺🇸 アームストロングから英語で旅行の相談を始めてもらう</button></div>
+    <div class="askrow"><button class="btn ghost" id="askEnd">相談を終える</button><button class="btn ghost grow" id="enTripStart">🇺🇸 アームストロングから英語で旅行の相談を始めてもらう</button></div>
     <p class="hint" id="askNote">アームストロングはネット検索やリアルタイムの運賃・時刻表の取得ができません。便は「よく使われる航空会社・経由地の目安」として出し、その日付のスカイスキャナー／Trip.comの検索リンクを付けます。実際の便・価格はリンク先で確認してください。</p>
     <div class="log" id="log" aria-live="polite"></div>
   </section>
@@ -1262,6 +1263,13 @@ async function askSend(text,hidden){
   }finally{ busy=false; $("send").disabled=false; $("enTripStart").disabled=false; }
 }
 $("send").addEventListener("click",()=>{ const t=$("q").value.trim(); if(!t) return; $("q").value=""; askSend(t,false); });
+$("askEnd").addEventListener("click",()=>{
+  if(busy) return;
+  try{speechSynthesis.cancel()}catch{}; try{ rec&&rec.stop(); }catch{}
+  history.length=0; curAiEl=null; $("log").innerHTML=""; $("q").value="";
+  toast("相談を終えました。会話は消去しました。");
+  window.scrollTo({top:0,behavior:"instant"}); if(mode!=="act") sit();
+});
 $("enTripStart").addEventListener("click",()=>{
   setAskLang("en"); location.hash="ask";
   askSend("（ユーザーは英語で旅行の相談をしながら英会話を練習したい。あなたから英語で話しかけて会話を始める。挨拶して、どこへ・いつ・何人で・何をしに行きたいかを1〜2個だけ質問する。まだツールは使わない）",true);
@@ -1340,7 +1348,7 @@ $("eSetup").addEventListener("click",e=>{
   if(b.dataset.lv){ ES.lv=b.dataset.lv; ES.showJa=ES.lv==="easy"; renderESetup(); }
   if(b.dataset.fx){ ES.fx=b.dataset.fx; renderESetup(); }
 });
-function eView(v){ ["eSetup","eRoom","eReport"].forEach(id=>$(id).hidden=id!==v); if(v==="eSetup") renderESetup(); document.getElementById("eng").scrollIntoView({block:"start"}); }
+function eView(v,top){ ["eSetup","eRoom","eReport"].forEach(id=>$(id).hidden=id!==v); if(v==="eSetup") renderESetup(); if(top) document.documentElement.scrollTop=0; else document.getElementById("eng").scrollIntoView({block:"start",behavior:"instant"}); }
 function eSetJa(){ $("eJa").textContent=ES.showJa?"日本語訳を隠す":"日本語訳を表示"; $("eJa").setAttribute("aria-pressed",ES.showJa); document.querySelectorAll("#eLog .ja").forEach(x=>x.hidden=!ES.showJa); }
 function eScroll(){ const l=$("eLog"); l.scrollTop=l.scrollHeight; }
 function eArm(text,ja,sugg){
@@ -1446,7 +1454,7 @@ $("eSend").addEventListener("click",()=>{ const t=$("eSay").value.trim(); if(!t|
 $("eSay").addEventListener("keydown",e=>{ if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); $("eSend").click(); } });
 $("eJa").addEventListener("click",()=>{ ES.showJa=!ES.showJa; eSetJa(); });
 $("eStop").addEventListener("click",()=>ES.ctl?.abort());
-$("eBack").addEventListener("click",()=>{ ES.ctl?.abort(); try{speechSynthesis.cancel()}catch{}; eView("eSetup"); });
+$("eBack").addEventListener("click",eHome);
 $("eHelp").addEventListener("click",async()=>{
   if(ES.busy) return; await sampleReady; if(!sampleFn) return;
   eSetBusy(true);
@@ -1475,22 +1483,53 @@ Return ONLY JSON:
   }catch(e){ card.textContent=eErr(e); }
   finally{ eSetBusy(false); }
 });
-$("eEnd").addEventListener("click",async()=>{
+/* 会話の終了：会話は必ず消し、講評のあと自動でアプリのトップに戻る */
+const E_RETURN_SEC=60;
+let eTimer=null;
+function eClear(){
+  ES.ctl?.abort(); try{speechSynthesis.cancel()}catch{}; try{ eRec&&eRec.stop(); }catch{}
+  ES.turns=[]; ES.fixes=[]; $("eLog").innerHTML=""; $("eSay").value="";
+  $("eNote").textContent="Ctrl+Enter（Macは⌘+Enter）でも送信できます。会話はこのページの中だけで使い、保存しません。個人情報は入力しないでください。";
+}
+function eHome(){
+  clearInterval(eTimer); eTimer=null;
+  eClear(); $("eReport").innerHTML="";
+  eView("eSetup",true); window.scrollTo({top:0,behavior:"instant"});
+  if(mode!=="act") sit();
+}
+function eCountdown(){
+  clearInterval(eTimer);
+  const bar=document.createElement("div"); bar.className="mission"; bar.style.marginTop="14px";
+  bar.innerHTML=`<div>⏱ <b class="code" style="font-size:20px" id="eLeft">${E_RETURN_SEC}</b> 秒後に自動でアプリのトップに戻ります（この講評も消えます）</div>
+    <div class="btnrow" style="margin-top:8px"><button class="btn primary" id="eHomeNow">今すぐ戻る</button><button class="btn ghost" id="eMore">もう少し見る（+60秒）</button></div>`;
+  $("eReport").appendChild(bar);
+  let left=E_RETURN_SEC;
+  $("eHomeNow").onclick=eHome;
+  $("eMore").onclick=()=>{ left+=60; $("eLeft").textContent=left; };
+  eTimer=setInterval(()=>{ left--; const el=$("eLeft"); if(el) el.textContent=left; if(left<=0) eHome(); },1000);
+}
+$("eEnd").addEventListener("click",()=>{
   if(ES.busy) return;
   if(!ES.turns.some(t=>t.r==="l")){ $("eNote").textContent="講評するには、少なくとも1回は返事をしてください。"; return; }
-  try{speechSynthesis.cancel()}catch{}
+  // 講評に使う分だけメモリに一時的に持ち、チャットの会話はこの時点で消す
+  const snap={transcript:eTranscript(),fixes:ES.fixes.slice()};
+  eClear();
+  eReviewRun(snap);
+});
+async function eReviewRun(snap){
+  clearInterval(eTimer);
   const s=ALL_SITS.find(x=>x.id===ES.sit), l=ELV.find(x=>x.id===ES.lv);
   eView("eReport"); const r=$("eReport");
-  r.innerHTML=`<h3 style="margin-top:0">講評を作っています…</h3><p class="empty">アームストロングが会話を振り返っています。30秒ほどかかることがあります。</p>`;
+  r.innerHTML=`<h3 style="margin-top:0">講評を作っています…</h3><p class="empty">アームストロングが会話を振り返っています。30秒ほどかかることがあります。チャットの会話はすでに消去しました。</p>`;
   try{
     if(!sampleFn) throw {code:"unavailable"};
     const j=await sampleFn.json(`${eBase()}
 
 # Full conversation
-${eTranscript()}
+${snap.transcript}
 
 # Corrections already given during the chat
-${ES.fixes.map(f=>`- "${f.you}" → "${f.better}"`).join("\n")||"(none)"}
+${snap.fixes.map(f=>`- "${f.you}" → "${f.better}"`).join("\n")||"(none)"}
 
 Now step out of the role and give a final review as Coach Armstrong. Return ONLY JSON:
 {"score":0-100 integer,"mission":"achieved"|"partly"|"not yet","armstrong_en":"2-3 sentence hype review in Armstrong style English","summary_ja":"総評（日本語2〜3文）",
@@ -1500,6 +1539,7 @@ Now step out of the role and give a final review as Coach Armstrong. Return ONLY
 "phrases":[{"en":"useful phrase for this situation","ja":"意味"}],
 "next_ja":"次回の練習で意識すること（1〜2文）"}
 fixes: the most important up to 6. phrases: 5 useful phrases for this situation.`,{modelTier:"default"});
+    snap=null;
     const sc=Number.isFinite(+j.score)?Math.max(0,Math.min(100,+j.score)):null;
     const mis={achieved:"🎯 ミッション達成",partly:"🟡 ミッション一部達成","not yet":"⏳ ミッション未達成"}[j.mission]||"";
     r.innerHTML=`<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
@@ -1510,22 +1550,22 @@ fixes: the most important up to 6. phrases: 5 useful phrases for this situation.
       <h3>👍 良かったところ</h3><div class="rlist">${(j.good||[]).map(g=>`<div class="fix ok"><span class="good">"${esc(g.quote)}"</span><span class="wja">${esc(g.why_ja)}</span></div>`).join("")||`<p class="empty">—</p>`}</div>
       <h3>📒 この場面で使えるフレーズ</h3><div class="rlist">${(j.phrases||[]).map((p,i)=>`<div class="post" style="margin:0"><p class="en">${esc(p.en)}</p><p class="pja">${esc(p.ja)}</p><div class="acts"><button class="sp" data-ph="${i}">🔊 聞く</button></div></div>`).join("")}</div>
       <h3>次回の練習で意識すること</h3><p style="margin:0">${esc(j.next_ja||"")}</p>
-      <div class="btnrow" style="margin-top:14px"><button class="btn primary grow" id="eAgain">同じ場面でもう一回</button><button class="btn ghost" id="eChange">場面を変える</button><button class="btn ghost" id="eReview">会話を見直す</button></div>
+      <div class="btnrow" style="margin-top:14px"><button class="btn primary grow" id="eAgain">同じ場面でもう一回</button><button class="btn ghost" id="eChange">場面を変える</button></div>
       <p class="hint">講評はAIによる目安です。採点は会話の内容から自動で出しています。</p>`;
     r.querySelector(".arm-en").textContent=j.armstrong_en||""; $("eSumJa").textContent=j.summary_ja||"";
     r.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>speak(j.phrases[+b.dataset.ph].en,{pitch:.8,rate:.88}));
     happy(`${j.armstrong_en||"Good work, my boy!"}`.slice(0,140),sc!=null?`${sc} PTS 💪`:"GOOD JOB!");
     const h=ehist.get(), d=new Date();
     h.push({date:`${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`,sit:s.name,lv:l.name,score:sc}); ehist.set(h);
+    $("eAgain").onclick=()=>{ clearInterval(eTimer); $("eReport").innerHTML=""; eStartRun(); };
+    $("eChange").onclick=eHome;
   }catch(e){
-    r.innerHTML=`<h3 style="margin-top:0">講評を作れませんでした</h3><p class="empty"></p><div class="btnrow"><button class="btn primary" id="eRetry">もう一度講評する</button><button class="btn ghost" id="eReview">会話に戻る</button></div>`;
+    r.innerHTML=`<h3 style="margin-top:0">講評を作れませんでした</h3><p class="empty"></p><div class="btnrow"><button class="btn primary" id="eRetry">もう一度講評する</button></div>`;
     r.querySelector("p").textContent=eErr(e);
-    $("eRetry").onclick=()=>$("eEnd").click();
+    const keep=snap; $("eRetry").onclick=()=>eReviewRun(keep);
   }
-  const a=$("eAgain"); if(a) a.onclick=eStartRun;
-  const c=$("eChange"); if(c) c.onclick=()=>eView("eSetup");
-  const rv=$("eReview"); if(rv) rv.onclick=()=>eView("eRoom");
-});
+  eCountdown();
+}
 let eRec=null;
 $("eMic").addEventListener("click",()=>{
   if(!SR){ $("eNote").textContent="この端末・ブラウザでは音声入力を使えません。キーボードの音声入力（英語）をお使いください。"; return; }
