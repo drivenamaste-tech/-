@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>アームストロング｜航空券担当 AI社員</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F7F9FB; --card:#FFFFFF; --ink:#1A2433; --muted:#5B6878; --line:#D9E0E8;
+  --crimson:#C8102E; --blue:#1F3A8A; --blue-soft:#E8EDF8; --ok:#1F7A4D; --night:#1E2A44;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --card:#1B2330; --ink:#E9EEF5; --muted:#9AA7B8; --line:#2E3A4B;
+    --crimson:#FF5A6E; --blue:#8FA8F0; --blue-soft:#24304A; --ok:#5CC48E; --night:#0C1222; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --card:#1B2330; --ink:#E9EEF5; --muted:#9AA7B8; --line:#2E3A4B;
+  --crimson:#FF5A6E; --blue:#8FA8F0; --blue-soft:#24304A; --ok:#5CC48E; --night:#0C1222; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.7;font-size:15px}
+.wrap{max-width:760px;margin:0 auto;padding:16px 16px 56px}
+.code{font-family:"Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.02em}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+h2{font-size:17px;margin:28px 0 10px}
+h3{font-size:15px;margin:16px 0 6px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.hint{font-size:12px;color:var(--muted);margin:10px 0 0}
+.warn{font-size:12px;color:var(--crimson);margin:8px 0 0}
+.empty{color:var(--muted);font-size:13px}
+
+/* room */
+.room{border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
+.stage{background:var(--blue-soft);position:relative;transition:background .6s}
+.stage.night{background:var(--night)}
+.stage svg{display:block;width:100%;height:auto;max-height:260px}
+.bubble{position:absolute;left:12px;right:12px;top:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 10px;font-size:13px;font-weight:500;opacity:0;transition:opacity .4s}
+.bubble.on{opacity:1}
+.roominfo{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;flex-wrap:wrap}
+.roominfo h1{margin:0;font-size:20px;line-height:1.3}
+.roominfo p{margin:0;color:var(--muted);font-size:12px}
+.nowdoing{font-size:13px;color:var(--muted)}
+.nowdoing strong{color:var(--ink)}
+.fade{animation:fade .5s ease}
+.bounce{animation:bounce .55s ease-in-out infinite;transform-origin:120px 186px}
+@keyframes bounce{50%{transform:translateY(-12px)}}
+.heart{animation:heart 1.8s ease-out infinite;opacity:0}
+@keyframes heart{0%{opacity:0;transform:translateY(0) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translateY(-60px) scale(1.2)}}
+.protein{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 14px 14px}
+.pbtn{background:#C8102E;color:#fff;border:none;border-radius:999px;padding:9px 16px;font-weight:700}
+.pform{display:flex;gap:6px;flex:1;min-width:220px}
+.pform input{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+.givers{width:100%;font-size:12px;color:var(--muted)}
+.givers b{color:var(--ink)}
+.pbtn.alt{background:var(--blue-soft);color:var(--blue)}
+.sns{width:100%}
+.sitchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.sitchips button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px}
+.sitchips button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.post{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;background:var(--paper)}
+.post .en{font-size:15px;font-weight:700;user-select:all;-webkit-user-select:all;margin:0}
+.post .pja{font-size:12px;color:var(--muted);margin:2px 0 6px}
+.post .acts{display:flex;gap:8px}
+.post .acts button{border:none;border-radius:8px;padding:6px 12px;font-weight:700;font-size:13px}
+.post .cp{background:var(--crimson);color:#fff}
+.post .sp{background:var(--blue-soft);color:var(--blue)}
+.work{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.job{display:flex;gap:10px;align-items:center;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.job .ic{font-size:24px}
+.job b{display:block;font-size:14px}
+.job small{display:block;font-size:11px;color:var(--muted);line-height:1.4}
+.job.main{grid-column:1/-1;background:var(--blue);border-color:var(--blue);color:#fff}
+.job.main small{color:rgba(255,255,255,.85)}
+.role{display:inline-block;background:var(--crimson);color:#fff;border-radius:6px;padding:0 8px;margin-right:6px;font-weight:700;font-size:12px}
+.slang{width:100%;border:2px solid var(--ink);border-radius:12px;padding:12px 14px;background:var(--paper)}
+.slang .w{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:34px;font-weight:700;line-height:1.1}
+.slang .ja{font-weight:700;margin:2px 0 6px}
+.slang p{margin:4px 0;font-size:14px}
+.slang .ex{border-left:3px solid var(--crimson);padding-left:8px}
+.slang .row{display:flex;gap:12px;margin-top:8px}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.zz{animation:zz 3s infinite;fill:var(--muted)}
+.zz.b{animation-delay:1s}.zz.c{animation-delay:2s}
+@keyframes zz{0%{opacity:0;transform:translate(0,0)}30%{opacity:1}100%{opacity:0;transform:translate(14px,-26px)}}
+.breath{animation:breath 3.2s ease-in-out infinite;transform-origin:120px 170px}
+@keyframes breath{50%{transform:scaleY(1.015)}}
+.drop{animation:drop 1.2s infinite;fill:#5BB6E8}
+@keyframes drop{0%{opacity:0;transform:translateY(0)}20%{opacity:1}100%{opacity:0;transform:translateY(14px)}}
+
+.nav{display:flex;gap:6px;overflow-x:auto;margin:12px 0 0;padding-bottom:2px}
+.nav a{flex:none;text-decoration:none;color:var(--blue);background:var(--blue-soft);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500}
+
+/* forms */
+label.f{display:block;font-size:12px;color:var(--muted)}
+label.f input,label.f select,label.f textarea{display:block;width:100%;margin-top:3px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+.grid{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.btn{border:none;border-radius:10px;padding:10px 14px;font-weight:700}
+.btn.primary{background:var(--crimson);color:#fff}
+.btn.ghost{background:var(--blue-soft);color:var(--blue)}
+.btn.rec{background:var(--crimson);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.askrow{display:flex;gap:8px;margin-top:10px}
+.askrow .grow{flex:1}
+.linkbtn{background:none;border:none;color:var(--blue);padding:0;font-size:13px;text-decoration:underline}
+.seg3{display:flex;gap:6px}
+.seg3 button{flex:1;border:1px solid var(--line);background:transparent;border-radius:10px;padding:8px 4px;font-size:13px;line-height:1.35}
+.seg3 button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.seg3 small{display:block;font-size:11px;opacity:.8}
+
+/* chat */
+.ask textarea{width:100%;min-height:84px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--paper);resize:vertical}
+.log{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+.msg{padding:10px 12px;border-radius:10px;white-space:pre-wrap;font-size:14px}
+.msg.me{background:var(--blue-soft);align-self:flex-end;max-width:88%}
+.msg.ai{background:var(--paper);border:1px solid var(--line)}
+
+/* plans */
+.plist{list-style:none;margin:0;padding:0}
+.plist li{border-bottom:1px solid var(--line)}
+.plist li:last-child{border-bottom:none}
+.pitem{width:100%;text-align:left;background:none;border:none;padding:10px 0;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pitem .r{font-size:20px;font-weight:700}
+.badge{font-size:12px;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.badge.done{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.badge.making{background:var(--blue-soft);color:var(--blue)}
+.badge.error{background:color-mix(in srgb,var(--crimson) 12%,transparent);color:var(--crimson)}
+.detail{margin-top:12px;border-top:2px dashed var(--line);padding-top:12px}
+.rcard{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px}
+.rcard .t{font-weight:700}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}
+.tag{font-size:11px;border-radius:6px;padding:1px 7px;background:var(--blue-soft);color:var(--blue)}
+.tag.red{background:color-mix(in srgb,var(--crimson) 12%,transparent);color:var(--crimson)}
+.tl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0;align-items:start}
+.tl .tm{font-size:22px;font-weight:700;line-height:1.2}
+.tl .ds{font-size:13px;padding-top:3px}
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.links{width:100%;border-collapse:collapse;font-size:13px}
+.links td{padding:6px 0;border-bottom:1px solid var(--line)}
+.links a{color:var(--blue);margin-left:12px}
+.say{display:flex;gap:10px;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:12px;font-size:14px}
+.say .face{font-size:22px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);border-radius:12px;padding:10px 12px 10px 16px;display:flex;gap:12px;align-items:center;font-size:14px;max-width:92vw;z-index:20;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.toast button{background:var(--crimson);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700}
+
+/* boarding pass search */
+.pass{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.pass-head{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--blue);color:#fff;font-size:13px}
+.pass-body{padding:16px}
+.perf{border:none;border-top:2px dashed var(--line);margin:0}
+.route{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0 2px}
+.route .iata{font-size:52px;font-weight:700;line-height:1}
+.route .plane{flex:1;text-align:center;color:var(--crimson);font-size:22px;position:relative}
+.route .plane::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px dotted var(--line)}
+.route .plane span{position:relative;background:var(--card);padding:0 6px}
+.cityline{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tab{flex:1;border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 0;font-weight:500}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.swap{border:1px solid var(--line);background:var(--paper);border-radius:8px;height:42px;width:42px}
+.seg{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:10px}
+.seg-title{font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+.go{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.go a{display:block;text-align:center;padding:12px 8px;border-radius:10px;text-decoration:none;font-weight:700}
+.go .sky{background:var(--blue);color:#fff}
+.go .trip{background:var(--card);color:var(--blue);border:2px solid var(--blue)}
+.go a[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 11px;font-size:13px}
+.chip .code{font-size:15px;font-weight:700}
+.watch li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);list-style:none}
+.watch ul{margin:0;padding:0}
+.watch .r{font-size:18px;font-weight:700}
+.watch .acts{display:flex;gap:10px;font-size:13px;flex-wrap:wrap;justify-content:flex-end}
+.watch a{color:var(--blue)}
+.rules{margin:0;padding-left:1.2em;font-size:14px}
+.rules li{margin-bottom:4px}
+/* English training */
+.sitgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.sit{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:9px 11px;text-align:left;display:grid;gap:1px;min-width:0}
+.sit b{font-size:14px}
+.sit span{font-size:11px;color:var(--muted);line-height:1.4}
+.sit[aria-pressed="true"]{border-color:var(--crimson);box-shadow:inset 0 0 0 1px var(--crimson);background:color-mix(in srgb,var(--crimson) 7%,var(--card))}
+.catlabel{font-size:12px;color:var(--muted);font-weight:700;margin:12px 0 6px}
+.segrow{display:flex;flex-wrap:wrap;gap:6px}
+.segrow button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px}
+.segrow button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.mission{border:2px solid var(--ink);border-radius:12px;padding:10px 12px;background:var(--paper);font-size:14px}
+.mission .ttl{font-weight:700}
+.elog{display:flex;flex-direction:column;gap:10px;margin-top:12px;max-height:62vh;overflow-y:auto;padding-right:2px}
+.eb{display:grid;gap:3px;max-width:90%;min-width:0}
+.eb .who{font-size:11px;color:var(--muted)}
+.eb .tx{padding:10px 12px;border-radius:12px;white-space:pre-wrap;word-break:break-word;font-size:15px}
+.eb.arm{align-self:flex-start}
+.eb.arm .tx{background:var(--paper);border:1px solid var(--line);border-top-left-radius:4px}
+.eb.me{align-self:flex-end}
+.eb.me .who{text-align:right}
+.eb.me .tx{background:var(--blue);color:#fff;border-top-right-radius:4px}
+.eb .ja{font-size:12px;color:var(--muted);margin:0 2px}
+.mini{display:flex;gap:14px;flex-wrap:wrap}
+.fix{align-self:stretch;border-left:4px solid var(--crimson);background:color-mix(in srgb,var(--crimson) 6%,var(--card));border-radius:0 10px 10px 0;padding:8px 12px;font-size:14px;display:grid;gap:3px}
+.fix.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--card))}
+.fix .bad{text-decoration:line-through;color:var(--muted)}
+.fix .good{font-weight:700;font-size:15px}
+.fix .why{font-size:13px}
+.fix .wja{font-size:12px;color:var(--muted)}
+.helpcard{align-self:stretch;border:1px dashed var(--blue);border-radius:10px;padding:8px 12px;background:var(--blue-soft);font-size:14px;display:grid;gap:3px}
+.sugg{display:flex;flex-wrap:wrap;gap:6px;align-self:stretch}
+.sugg button{border:1px dashed var(--line);background:var(--card);border-radius:999px;padding:4px 10px;font-size:12px;text-align:left}
+.ecompose{border-top:1px solid var(--line);margin-top:12px;padding-top:12px;display:grid;gap:8px}
+.ecompose textarea{width:100%;min-height:70px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--paper);resize:vertical}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+.btnrow .grow{flex:1 1 140px}
+.score{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:56px;font-weight:700;line-height:1}
+.score small{font-size:18px;color:var(--muted)}
+.rlist{display:grid;gap:8px;margin-top:6px}
+.ehist{font-size:13px;display:grid;gap:4px}
+.ehist div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:3px 0}
+.fcard{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--card);font-size:13px}
+.fcard .ft{font-weight:700;font-size:14px}
+.frow{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;border-bottom:1px solid var(--line);padding:6px 0;flex-wrap:wrap}
+.frow:last-child{border-bottom:none}
+.frow a{color:var(--blue);margin-left:10px;white-space:nowrap}
+@media (max-width:480px){.route .iata{font-size:42px}.pitem .r{font-size:18px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- room -->
+  <section class="room" aria-label="FLYYOU GYM：アームストロングのトレーニングルーム">
+    <div class="stage" id="stage">
+      <div class="bubble" id="bubble" aria-live="polite"></div>
+      <div id="scene"></div>
+    </div>
+    <div class="roominfo">
+      <div>
+        <h1>アームストロング</h1>
+        <p><span class="role">航空券＋旅行係</span>株式会社FLYYOU AI社員｜193cm・102kg</p>
+      </div>
+      <div style="text-align:right">
+        <div class="nowdoing" id="nowdoing"></div>
+        <button class="linkbtn" id="toggleAct">トレーニングに戻ってもらう</button>
+        <div><button class="linkbtn" id="voiceBtn" aria-pressed="true">🔊 声 ON</button></div>
+      </div>
+    </div>
+  </section>
+
+  <h2>💼 アームストロングへお仕事</h2>
+  <section class="work" aria-label="アームストロングへお仕事">
+    <a class="job main" href="#search"><span class="ic">✈️</span><span><b>航空券を探して</b><small>行き先・日付・片道／往復／周遊を選ぶ</small></span></a>
+    <a class="job" href="#entry"><span class="ic">🛬</span><span><b>入国プランを作って</b><small>関空・成田羽田・那覇の迎え</small></span></a>
+    <a class="job" href="#plans"><span class="ic">📋</span><span><b>入国プラン一覧</b><small>作ったプランを見る</small></span></a>
+    <a class="job" href="#ask"><span class="ic">💬</span><span><b>相談・旅行プラン</b><small>日本語／英語で相談・便の目安と検索リンク</small></span></a>
+    <a class="job" href="#trip"><span class="ic">🏔️</span><span><b>直近の出張</b><small>1月のネパール</small></span></a>
+    <a class="job main" href="#eng" style="background:var(--crimson);border-color:var(--crimson)"><span class="ic">🗣️</span><span><b>アームストロングの英会話特訓</b><small>レストラン・空港・クラブなど場面別。間違えたら英語で直してくれる</small></span></a>
+  </section>
+
+  <h2>🥤 プロテインをあげる</h2>
+  <section class="panel">
+    <div class="protein" style="padding:0">
+      <button class="pbtn" id="pGive">🥤 プロテインをあげる</button>
+      <div class="pform" id="pForm" hidden>
+        <input id="pName" maxlength="20" placeholder="あなたの名前" aria-label="あなたの名前">
+        <button class="btn primary" id="pSend">渡す</button>
+      </div>
+      <div class="givers" id="givers"></div>
+    </div>
+  </section>
+
+  <h2>🎧 アームストロング・コンテンツ</h2>
+  <section class="panel">
+    <div class="protein" style="padding:0">
+      <button class="pbtn alt" id="slangBtn">🎤 スラングを教えて</button>
+      <button class="pbtn alt" id="teaseBtn">😼 ふざけモード</button>
+      <button class="pbtn alt" id="snsBtn">📱 SNS投稿スラング</button>
+      <div class="slang" id="slangCard" hidden></div>
+      <div class="sns" id="snsBox" hidden></div>
+    </div>
+    <p class="hint">押すと、上のジムでアームストロングが喋ります。</p>
+  </section>
+
+  <!-- English training -->
+  <h2 id="eng">🗣️ アームストロングの英会話特訓</h2>
+  <section class="panel" id="eSetup">
+    <p style="margin:0 0 4px;font-size:14px">場面を選ぶと、アームストロングが相手役（店員・入国審査官・友達など）になって英語で話しかけてきます。変な英語や日本語で返すと、<b>「Nah, say it like this…」</b>と英語で直してくれます。</p>
+    <div id="sitWrap"></div>
+    <p class="catlabel">レベル</p>
+    <div class="segrow" id="lvRow"></div>
+    <p class="catlabel">直し方</p>
+    <div class="segrow" id="fxRow"></div>
+    <div class="btnrow" style="margin-top:14px">
+      <button class="btn primary grow" id="eStart" disabled>特訓スタート</button>
+    </div>
+    <p class="hint" id="eStartNote">場面を選んでください。</p>
+    <div id="eHistWrap" hidden>
+      <p class="catlabel">これまでの特訓（このブラウザ内だけに保存）</p>
+      <div class="ehist" id="eHist"></div>
+    </div>
+  </section>
+  <section class="panel" id="eRoom" hidden>
+    <div class="mission" id="eMission"></div>
+    <div class="elog" id="eLog" aria-live="polite"></div>
+    <div class="ecompose">
+      <label class="f" for="eSay" style="font-size:12px">あなたの返事（英語で。わからなければ日本語でもOK → 英語の言い方を教えてくれます）</label>
+      <textarea id="eSay" placeholder="Type your answer in English…"></textarea>
+      <div class="btnrow">
+        <button class="btn primary grow" id="eSend">送信</button>
+        <button class="btn ghost" id="eMic" aria-pressed="false">🎤 英語で話す</button>
+        <button class="btn ghost" id="eHelp">🆘 どう言えばいい？</button>
+      </div>
+      <div class="btnrow">
+        <button class="btn ghost" id="eJa" aria-pressed="false">日本語訳を表示</button>
+        <button class="btn ghost" id="eStop" hidden>止める</button>
+        <span style="flex:1"></span>
+        <button class="btn ghost" id="eBack">場面を変える</button>
+        <button class="btn primary" id="eEnd">終わって講評へ</button>
+      </div>
+      <p class="hint" id="eNote">Ctrl+Enter（Macは⌘+Enter）でも送信できます。会話はこのページの中だけで使い、保存しません。個人情報は入力しないでください。</p>
+    </div>
+  </section>
+  <section class="panel" id="eReport" hidden></section>
+
+  <!-- ask -->
+  <h2 id="ask">相談・旅行プラン（日本語／English）</h2>
+  <section class="panel ask">
+    <div class="segrow" id="askLangRow" style="margin-bottom:8px">
+      <button data-l="ja" aria-pressed="true">🇯🇵 日本語で相談</button>
+      <button data-l="en" aria-pressed="false">🇺🇸 Englishで相談（英語チェックつき）</button>
+    </div>
+    <textarea id="q" placeholder="例：12月にカトマンズから関空に1名。同じ航空会社で、乗継ビザ不要のルートで一番安い組み方は？"></textarea>
+    <div class="askrow">
+      <button class="btn primary grow" id="send">アームストロングに聞く</button>
+      <button class="btn ghost" id="mic" aria-pressed="false">🎤 音声で入力</button>
+    </div>
+    <div class="askrow"><button class="btn ghost grow" id="enTripStart">🇺🇸 アームストロングから英語で旅行の相談を始めてもらう</button></div>
+    <p class="hint" id="askNote">アームストロングはネット検索やリアルタイムの運賃・時刻表の取得ができません。便は「よく使われる航空会社・経由地の目安」として出し、その日付のスカイスキャナー／Trip.comの検索リンクを付けます。実際の便・価格はリンク先で確認してください。</p>
+    <div class="log" id="log" aria-live="polite"></div>
+  </section>
+
+  <!-- entry plan -->
+  <h2 id="entry">入国プランを作る</h2>
+  <section class="panel">
+    <label class="f">出発する国
+      <select id="eCountry">
+        <option value="NP">ネパール（カトマンズ KTM）</option>
+        <option value="MM">ミャンマー（ヤンゴン RGN）</option>
+        <option value="ID">インドネシア（ジャカルタ CGK）</option>
+        <option value="CN-PVG">中国（上海 PVG）</option>
+        <option value="CN-PEK">中国（北京 PEK）</option>
+        <option value="CN-CAN">中国（広州 CAN）</option>
+      </select>
+    </label>
+    <p style="font-size:12px;color:var(--muted);margin:12px 0 4px">受け入れる地域</p>
+    <div class="seg3" role="group" aria-label="受け入れる地域">
+      <button data-r="west" aria-pressed="true">西日本<small>関西空港 KIX</small></button>
+      <button data-r="kanto" aria-pressed="false">関東<small>成田・羽田</small></button>
+      <button data-r="okinawa" aria-pressed="false">沖縄<small>那覇空港 OKA</small></button>
+    </div>
+    <div class="grid2">
+      <label class="f">到着希望日（この日から）<input type="date" id="eFrom"></label>
+      <label class="f">この日まで（週で探すとき）<input type="date" id="eTo"></label>
+    </div>
+    <div class="grid2">
+      <label class="f">人数<select id="ePax"></select></label>
+      <label class="f">メモ（任意）<input id="eMemo" placeholder="例：施設の都合で午後到着希望"></label>
+    </div>
+    <p class="hint">氏名・旅券番号などの個人情報は入力しないでください。作ったプランは、このページを開ける社内メンバーで共有されます。</p>
+    <p class="warn" id="eErr" hidden></p>
+    <div class="askrow"><button class="btn primary grow" id="eMake">入国プランを作る</button></div>
+  </section>
+
+  <h2 id="plans">入国プラン一覧</h2>
+  <section class="panel">
+    <ul class="plist" id="plist"></ul>
+    <div id="detail"></div>
+  </section>
+
+  <!-- search -->
+  <h2 id="search">格安航空券を探す</h2>
+  <div class="chips" id="presets"></div>
+  <section class="pass" aria-label="検索条件">
+    <div class="pass-head"><strong>BOARDING PASS</strong><span id="typeLabel">往復</span></div>
+    <div class="pass-body">
+      <div class="route">
+        <span class="iata code" id="vO">KTM</span>
+        <span class="plane"><span>✈</span></span>
+        <span class="iata code" id="vD">KIX</span>
+      </div>
+      <div class="cityline"><span id="cO">カトマンズ</span><span id="cD">大阪（関西）</span></div>
+    </div>
+    <hr class="perf">
+    <div class="pass-body">
+      <div class="tabs" role="group" aria-label="旅程の種類">
+        <button class="tab" data-t="ow" aria-pressed="false">片道</button>
+        <button class="tab" data-t="rt" aria-pressed="true">往復</button>
+        <button class="tab" data-t="mc" aria-pressed="false">周遊</button>
+      </div>
+      <div id="simple">
+        <div class="grid">
+          <label class="f">出発地<input id="o" list="ap" value="KTM" autocomplete="off"></label>
+          <button class="swap" id="swap" aria-label="出発地と到着地を入れ替える">⇄</button>
+          <label class="f">到着地<input id="d" list="ap" value="KIX" autocomplete="off"></label>
+        </div>
+        <div class="grid2">
+          <label class="f">出発日<input type="date" id="d1"></label>
+          <label class="f" id="retWrap">帰りの日<input type="date" id="d2"></label>
+        </div>
+      </div>
+      <div id="multi" hidden>
+        <div id="segs"></div>
+        <button class="linkbtn" id="addSeg" style="margin-top:8px">＋ 区間を追加</button>
+      </div>
+      <div class="grid2">
+        <label class="f">人数（大人）<select id="pax"></select></label>
+        <label class="f">座席<select id="cabin">
+          <option value="economy">エコノミー</option>
+          <option value="premiumeconomy">プレミアムエコノミー</option>
+          <option value="business">ビジネス</option>
+        </select></label>
+      </div>
+      <div class="go">
+        <a class="sky" id="goSky" target="_blank" rel="noopener">スカイスキャナーで検索</a>
+        <a class="trip" id="goTrip" target="_blank" rel="noopener">Trip.comで検索</a>
+      </div>
+      <p class="warn" id="err" hidden></p>
+      <p class="hint" id="mcNote" hidden>周遊はTrip.com側で区間が正しく入っているか、開いた画面で確認してください。</p>
+      <div class="askrow"><button class="btn ghost grow" id="save">この条件をウォッチリストに保存</button></div>
+    </div>
+  </section>
+
+  <h2>ウォッチリスト</h2>
+  <section class="panel watch"><ul id="wl"></ul></section>
+
+  <h2 id="trip">直近の出張：ネパール</h2>
+  <section class="panel">
+    <p style="margin:0 0 6px"><span class="code" style="font-size:20px;font-weight:700">1/16 – 1/22</span>　ネパール滞在</p>
+    <p style="margin:0 0 10px"><span class="code" style="font-size:20px;font-weight:700">1/22 KTM → 1/23 KIX</span>　関空から社用車で米子へ</p>
+    <ol class="rules">
+      <li>チトワン（FLYYOU事務所）は必須</li>
+      <li>カトマンズに2日程度</li>
+      <li>ヌワコット</li>
+      <li>エベレスト遊覧飛行（現地の航空会社・旅行会社を比較）</li>
+    </ol>
+    <p class="warn">未確定：1/16は関空出発日かネパール到着日か／人数／ネパール人スタッフの同行</p>
+    <div class="askrow"><button class="btn ghost grow" id="planBtn">この出張のプランをアームストロングに作ってもらう</button></div>
+  </section>
+
+  <h2>アームストロングのルール</h2>
+  <section class="panel">
+    <ol class="rules">
+      <li>ネパールからの来日（在留資格を持たない方）は、通し航空券・同一航空会社（または同じ予約で乗継）を優先し、乗継国のビザが要らないルートを選びます。</li>
+      <li>基本はバンコク経由（タイ国際航空など）。乗継地のビザ・入国要件は、出発前に航空会社と大使館の公式情報で必ず確認します。</li>
+      <li>FLYYOUの社員が日本から行くときは、所要時間より最安値を優先。ネパール人スタッフが同行する場合は、その方が通れるルートに合わせます。</li>
+      <li>西日本は関西空港、関東は成田・羽田、沖縄は那覇空港で受け入れます。</li>
+      <li>表示価格・便の時刻は各サイトでの確認が必要です。予約・支払いはアームストロングは行いません。</li>
+    </ol>
+  </section>
+
+  <h2>値下がりメールの受け取り方</h2>
+  <section class="panel">
+    <ol class="rules">
+      <li>スカイスキャナー／Trip.comの「価格アラート」をオンにします（アカウントのメールを flyyoujapan@outlook.jp にすると会社に届きます）。</li>
+      <li>毎朝9時のレポート（格安航空券・周遊プラン・出張プラン）は、Cowork のスケジュールタスクで送ります。</li>
+    </ol>
+  </section>
+</div>
+
+<datalist id="ap"></datalist>
+<div id="toastHost"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+
+/* ================= Armstrong room ================= */
+const SKIN="#6B4226", SKIN2="#4E2F1B", SKL="#3A2213", PANT="#5B6B3A", PANT2="#465426", HAIR="#141414", BOOT="#2B2B2B";
+const SCHED=[[6,8,"pushup","腕立て伏せ"],[8,10,"situp","腹筋"],[10,12,"plank","プランク"],[12,14,"pullup","鉄棒（懸垂）"],[14,16,"bench","ベンチプレス"],[16,18,"pushup","腕立て伏せ"],[18,20,"squat","スクワット"]];
+function nowAct(){
+  const h=new Date().getHours();
+  for(const s of SCHED) if(h>=s[0]&&h<s[1]) return {key:s[2],label:s[3],from:s[0],to:s[1]};
+  return {key:"sleep",label:"ジムの布団で睡眠",from:20,to:6};
+}
+const P={
+  pushup:{per:1400,a:{hd:[188,120],n:[176,130],h:[114,150],k:[88,162],f:[62,174],e:[176,153],w:[178,176]},
+                   b:{hd:[190,150],n:[178,157],h:[114,164],k:[88,169],f:[62,174],e:[162,160],w:[178,176]},prop:"mat"},
+  situp:{per:1700,a:{hd:[66,168],n:[78,170],h:[128,172],k:[152,148],f:[176,176],e:[78,156],w:[66,160]},
+                  b:{hd:[124,118],n:[124,130],h:[128,172],k:[152,148],f:[176,176],e:[140,124],w:[120,112]},prop:"mat"},
+  plank:{per:260,a:{hd:[186,142],n:[175,150],h:[112,157],k:[86,165],f:[60,175],e:[172,177],w:[196,177]},
+                 b:{hd:[186,143],n:[175,151],h:[112,159],k:[86,166],f:[60,175],e:[172,177],w:[196,177]},prop:"mat",sweat:true},
+  pullup:{per:1900,a:{hd:[124,74],n:[124,86],h:[122,134],k:[127,158],f:[110,172],e:[125,63],w:[126,40]},
+                   b:{hd:[124,44],n:[124,56],h:[122,104],k:[127,130],f:[110,144],e:[108,60],w:[126,40]},prop:"bar"},
+  bench:{per:1700,a:{hd:[166,137],n:[154,141],h:[100,143],k:[74,148],f:[66,180],e:[140,152],w:[150,124]},
+                  b:{hd:[166,137],n:[154,141],h:[100,143],k:[74,148],f:[66,180],e:[150,118],w:[152,96]},prop:"bench"},
+  squat:{per:1700,a:{hd:[124,58],n:[122,70],h:[118,118],k:[122,150],f:[120,180],e:[140,84],w:[158,84]},
+                  b:{hd:[132,98],n:[126,110],h:[102,150],k:[146,154],f:[120,180],e:[146,116],w:[164,114]},prop:"floor"}
+};
+const L=(a,b,c,w)=>`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+const C=(p,r,c)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${r}" fill="${c}"/>`;
+const lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+const SVG0=(label)=>`<svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label}">`;
+function gymBG(night){
+  return `<rect width="240" height="200" fill="#D9D4CA"/><rect y="0" width="240" height="8" fill="#BDB6A8"/>
+  <rect x="8" y="30" width="62" height="96" rx="2" fill="#C7D5DE" stroke="#8D99A3" stroke-width="2"/><path d="M18 40 l20 -8 M18 58 l34 -14 M24 96 l40 -16" stroke="#E6EEF3" stroke-width="3"/>
+  <rect x="84" y="12" width="72" height="17" rx="3" fill="#C8102E"/><text x="120" y="24.5" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="Arial,sans-serif" letter-spacing=".5">FLYYOU GYM</text>
+  <rect x="186" y="98" width="48" height="5" fill="#4B4F55"/><rect x="186" y="122" width="48" height="5" fill="#4B4F55"/><line x1="190" y1="98" x2="190" y2="165" stroke="#4B4F55" stroke-width="3"/><line x1="230" y1="98" x2="230" y2="165" stroke="#4B4F55" stroke-width="3"/>
+  ${[194,208,222].map(x=>`<rect x="${x-5}" y="90" width="10" height="8" rx="2" fill="#2E3136"/><rect x="${x-5}" y="114" width="10" height="8" rx="2" fill="#2E3136"/>`).join("")}
+  <rect y="165" width="240" height="35" fill="#3A3D42"/><path d="M0 165 h240" stroke="#55595F" stroke-width="2"/>
+  <circle cx="24" cy="178" r="8" fill="#2A2C30"/><path d="M18 172 q6 -10 12 0" stroke="#2A2C30" stroke-width="3" fill="none"/>
+  ${night?`<rect width="240" height="200" fill="#0B1430" opacity=".62"/>`:""}`;
+}
+function fig(j){
+  const s=lerp(j.n,j.h,.12), o=p=>[p[0]-3,p[1]-2], x=j.hd[0], y=j.hd[1];
+  return `<defs><linearGradient id="flg" gradientUnits="userSpaceOnUse" x1="${j.n[0]}" y1="${j.n[1]}" x2="${j.h[0]}" y2="${j.h[1]}">
+    <stop offset="0" stop-color="#00B5E2"/><stop offset=".34" stop-color="#00B5E2"/><stop offset=".34" stop-color="#EF3340"/>
+    <stop offset=".67" stop-color="#EF3340"/><stop offset=".67" stop-color="#509E2F"/><stop offset="1" stop-color="#509E2F"/></linearGradient></defs>
+  ${L(o(j.h),o(j.k),PANT2,13)}${L(o(j.k),o(j.f),PANT2,11)}${C(o(j.f),6,BOOT)}
+  ${L(o(s),o(j.e),SKIN2,14)}${L(o(j.e),o(j.w),SKIN2,10)}
+  ${L(j.n,j.hd,SKIN,12)}
+  ${C(s,9,SKIN)}${L(j.n,j.h,"url(#flg)",27)}
+  ${L(j.h,j.k,PANT,13)}${L(j.k,j.f,PANT,11)}${C(j.f,6,BOOT)}
+  ${C(s,8.5,SKIN)}${L(s,j.e,SKIN,14)}${L(j.e,j.w,SKIN,10)}${C(lerp(s,j.e,.55),8,SKIN)}${C(j.w,5,SKIN)}
+  <circle cx="${x}" cy="${y}" r="11" fill="${SKIN}" stroke="${SKL}" stroke-width=".8"/>
+  <path d="M${x-11} ${y-3} A11 11 0 0 1 ${x+11} ${y-3} Q${x} ${y-7} ${x-11} ${y-3}Z" fill="${HAIR}"/>
+  ${C([x+5,y],1.9,"#fff")}${C([x+5.6,y],1.1,"#111")}`;
+}
+function prop(k){
+  const g=`<line x1="20" y1="183" x2="220" y2="183" stroke="#55595F" stroke-width="2"/>`;
+  if(k==="mat") return g+`<rect x="40" y="178" width="168" height="5" rx="2" fill="#3E7CB1"/>`;
+  if(k==="bar") return g+`<line x1="72" y1="40" x2="72" y2="183" stroke="#8A93A0" stroke-width="4"/><line x1="176" y1="40" x2="176" y2="183" stroke="#8A93A0" stroke-width="4"/><line x1="66" y1="40" x2="182" y2="40" stroke="#B8C0CA" stroke-width="4" stroke-linecap="round"/>`;
+  if(k==="bench") return g+`<rect x="56" y="150" width="120" height="8" rx="3" fill="#1F2733"/><line x1="70" y1="158" x2="70" y2="183" stroke="#1F2733" stroke-width="4"/><line x1="160" y1="158" x2="160" y2="183" stroke="#1F2733" stroke-width="4"/>`;
+  return g;
+}
+/* front view parts */
+const FACES={
+  glare:`<path d="M104 54 L116 59 M136 54 L124 59" stroke="${HAIR}" stroke-width="3.2" stroke-linecap="round"/>
+    <ellipse cx="111" cy="63" rx="3.6" ry="1.8" fill="#fff"/><ellipse cx="129" cy="63" rx="3.6" ry="1.8" fill="#fff"/><circle cx="111.5" cy="63" r="1.4" fill="#111"/><circle cx="128.5" cy="63" r="1.4" fill="#111"/>
+    <path d="M112 75 Q120 70 128 75" stroke="#2A160C" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+  happy:`<path d="M104 52 Q110 48 116 52 M124 52 Q130 48 136 52" stroke="${HAIR}" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <path d="M106 62 Q111 57 116 62 M124 62 Q129 57 134 62" stroke="#111" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M108 70 Q120 86 132 70 Z" fill="#fff" stroke="#2A160C" stroke-width="1.4"/>`,
+  cool:`<path d="M104 55 L116 56 M124 56 L136 55" stroke="${HAIR}" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="111" cy="62" rx="3.6" ry="2.4" fill="#fff"/><ellipse cx="129" cy="62" rx="3.6" ry="2.4" fill="#fff"/><circle cx="111.5" cy="62" r="1.6" fill="#111"/><circle cx="129.5" cy="62" r="1.6" fill="#111"/>
+    <path d="M112 74 Q120 79 128 74" stroke="#2A160C" stroke-width="2" fill="none" stroke-linecap="round"/>`
+};
+function upper(face){
+  return `<defs><clipPath id="tk"><path d="M94 96 L146 96 L154 158 L86 158 Z"/></clipPath></defs>
+  <g clip-path="url(#tk)"><rect x="80" y="94" width="80" height="22" fill="#00B5E2"/><rect x="80" y="116" width="80" height="21" fill="#EF3340"/><rect x="80" y="137" width="80" height="22" fill="#509E2F"/>
+  <circle cx="118" cy="126" r="6" fill="#fff"/><circle cx="119.6" cy="126" r="5" fill="#EF3340"/><circle cx="125.5" cy="126" r="2.3" fill="#fff"/></g>
+  <rect x="109" y="76" width="22" height="22" fill="${SKIN}"/>
+  <circle cx="84" cy="104" r="16" fill="${SKIN}" stroke="${SKL}" stroke-width=".8"/><circle cx="156" cy="104" r="16" fill="${SKIN}" stroke="${SKL}" stroke-width=".8"/>
+  <ellipse cx="120" cy="60" rx="19" ry="21" fill="${SKIN}" stroke="${SKL}" stroke-width=".8"/>
+  <ellipse cx="100" cy="62" rx="3" ry="5" fill="${SKIN}"/><ellipse cx="140" cy="62" rx="3" ry="5" fill="${SKIN}"/>
+  <path d="M101 52 Q101 37 120 37 Q139 37 139 52 Q130 45 120 45 Q110 45 101 52Z" fill="${HAIR}"/>
+  <path d="M102 66 Q104 83 120 83 Q136 83 138 66 Q134 77 120 78 Q106 77 102 66Z" fill="${HAIR}" opacity=".55"/>
+  ${FACES[face]}`;
+}
+const ARMS={
+  crossed:`<ellipse cx="80" cy="124" rx="12" ry="17" fill="${SKIN}" stroke="${SKL}" stroke-width=".8"/><ellipse cx="160" cy="124" rx="12" ry="17" fill="${SKIN}" stroke="${SKL}" stroke-width=".8"/>
+    <rect x="84" y="131" width="72" height="14" rx="7" fill="${SKIN2}"/><rect x="80" y="121" width="80" height="15" rx="7.5" fill="${SKIN}" stroke="${SKL}" stroke-width=".8"/>`,
+  flex:`${L([84,104],[52,100],SKIN,19)}${L([156,104],[188,100],SKIN,19)}${C([66,95],11,SKIN)}${C([174,95],11,SKIN)}
+    ${L([52,100],[54,68],SKIN,15)}${L([188,100],[186,68],SKIN,15)}${C([54,64],9,SKIN)}${C([186,64],9,SKIN)}`,
+  desk:`${L([84,108],[86,134],SKIN,18)}${L([156,108],[154,134],SKIN,18)}${L([86,136],[110,137],SKIN,14)}${L([154,136],[130,137],SKIN,14)}${C([112,137],7,SKIN)}${C([128,137],7,SKIN)}`
+};
+function sitSVG(){
+  return SVG0("ジムであぐらをかいてこちらをにらむアームストロング")+gymBG(false)+`
+  <g transform="rotate(-3 120 170)"><g class="breath">
+  <ellipse cx="96" cy="170" rx="44" ry="13" fill="${PANT}"/><ellipse cx="144" cy="173" rx="44" ry="13" fill="${PANT2}"/>
+  <ellipse cx="84" cy="166" rx="7" ry="4" fill="#4A5730"/><ellipse cx="156" cy="170" rx="8" ry="4" fill="#7A8450"/>
+  <ellipse cx="58" cy="178" rx="9" ry="7" fill="${BOOT}"/><ellipse cx="184" cy="180" rx="9" ry="7" fill="${BOOT}"/>
+  <rect x="88" y="152" width="64" height="8" fill="#3B3B2E"/>
+  ${upper("glare")}${ARMS.crossed}</g></g>
+  <path d="M150 34 l4 4 m0 -4 l-4 4 M158 30 l4 4 m0 -4 l-4 4" stroke="#EF3340" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+}
+function happySVG(lbl="PROTEIN!!"){
+  const hearts=[[40,90,0],[200,80,.4],[60,50,.8],[180,40,1.2],[120,24,.2]].map(([x,y,d])=>`<text class="heart" style="animation-delay:${d}s" x="${x}" y="${y}" font-size="16" fill="#EF3340">❤</text>`).join("");
+  return SVG0("プロテインをもらって大喜びするアームストロング")+gymBG(false)+`<g class="bounce">
+  <rect x="96" y="156" width="22" height="26" fill="${PANT}"/><rect x="122" y="156" width="22" height="26" fill="${PANT2}"/>
+  <rect x="94" y="178" width="26" height="9" rx="3" fill="${BOOT}"/><rect x="120" y="178" width="26" height="9" rx="3" fill="${BOOT}"/>
+  <rect x="88" y="152" width="64" height="8" fill="#3B3B2E"/>
+  ${upper("happy")}${ARMS.flex}
+  <rect x="180" y="44" width="12" height="18" rx="2" fill="#C8102E"/><rect x="179" y="40" width="14" height="5" rx="1.5" fill="#333"/></g>
+  ${hearts}<text x="120" y="196" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">${lbl}</text></svg>`;
+}
+function officeSVG(){
+  return SVG0("事務所のデスクに座るアームストロング")+`<rect width="240" height="200" fill="#ECE6DA"/>
+  <rect x="152" y="18" width="72" height="52" fill="#BFE0F5" stroke="#9C8D78" stroke-width="3"/><path d="M188 18 v52 M152 44 h72" stroke="#9C8D78" stroke-width="2"/>
+  <rect x="12" y="20" width="92" height="54" rx="2" fill="#fff" stroke="#B6ADA0" stroke-width="2"/>
+  <text x="20" y="34" font-size="8" font-weight="700" fill="#1F3A8A">入国プラン</text><path d="M20 44 h60 M20 54 h44 M20 64 h70" stroke="#C7CDD6" stroke-width="3"/>
+  <rect x="210" y="96" width="16" height="22" fill="#8B6A47"/><circle cx="218" cy="88" r="14" fill="#5E8C4A"/>
+  <rect y="160" width="240" height="40" fill="#B9A58C"/>
+  <g transform="translate(0,-4)">${upper("cool")}</g>
+  <rect x="34" y="130" width="172" height="12" rx="2" fill="#8B6A47"/><rect x="44" y="142" width="152" height="44" fill="#7A5B3B"/>
+  ${ARMS.desk}
+  <rect x="150" y="108" width="44" height="24" rx="2" fill="#9AA3AD"/><rect x="146" y="131" width="52" height="4" rx="1" fill="#6E7680"/><circle cx="172" cy="120" r="3" fill="#C8102E"/>
+  <rect x="52" y="110" width="12" height="20" rx="2" fill="#C8102E"/><rect x="51" y="106" width="14" height="5" rx="1.5" fill="#333"/>
+  <text x="120" y="172" text-anchor="middle" font-size="7" fill="#E9DCC6" font-weight="700">FLYYOU｜AIR TICKET DESK</text></svg>`;
+}
+function sleepSVG(){
+  return SVG0("ジムの床の布団で寝ているアームストロング")+gymBG(true)+`
+  <rect x="26" y="160" width="194" height="20" rx="6" fill="#CFC8B8"/>
+  <ellipse cx="60" cy="154" rx="24" ry="9" fill="#E8E8E8"/>
+  <circle cx="62" cy="143" r="12" fill="${SKIN}" stroke="${SKL}" stroke-width=".8"/>
+  <path d="M50 140 A12 12 0 0 1 74 140 Q62 135 50 140Z" fill="${HAIR}"/>
+  <path d="M60 145 q3 2 6 0" stroke="#E8D8C8" stroke-width="1.4" fill="none"/>
+  <path d="M74 148 Q140 130 216 146 L216 172 L72 172 Z" fill="#4A6CA3"/>
+  <path d="M74 148 Q90 142 104 144 L104 172 L72 172Z" fill="#00B5E2"/>
+  <path d="M100 152 h104 M100 162 h110" stroke="#3A5A8E" stroke-width="2"/>
+  <text class="zz" x="80" y="120" font-size="14" font-weight="700">Z</text>
+  <text class="zz b" x="90" y="108" font-size="17" font-weight="700">Z</text>
+  <text class="zz c" x="100" y="96" font-size="20" font-weight="700">Z</text></svg>`;
+}
+let raf=null, mode="act", prevMode="sit";
+function play(key){
+  cancelAnimationFrame(raf);
+  if(key==="sleep"){ $("scene").innerHTML=sleepSVG(); return; }
+  const p=P[key]; const t0=performance.now();
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const bg=gymBG(false);
+  const frame=now=>{
+    const t=reduce?0:(0.5-0.5*Math.cos((now-t0)/p.per*2*Math.PI));
+    const j={}; for(const k in p.a) j[k]=lerp(p.a[k],p.b[k],t);
+    const plate=key==="bench"?`<circle cx="${j.w[0]}" cy="${j.w[1]}" r="13" fill="#333"/><circle cx="${j.w[0]}" cy="${j.w[1]}" r="3" fill="#999"/>`:"";
+    const sweat=p.sweat?`<path class="drop" d="M196 128 q3 5 0 7 q-3 -2 0 -7z"/><path class="drop" style="animation-delay:.6s" d="M180 132 q3 5 0 7 q-3 -2 0 -7z"/>`:"";
+    $("scene").innerHTML=SVG0("ジムでトレーニング中のアームストロング")+bg+prop(p.prop)+fig(j)+plate+sweat+`</svg>`;
+    if(!reduce) raf=requestAnimationFrame(frame);
+  };
+  raf=requestAnimationFrame(frame);
+}
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const GRUMP=["Yo… I was mid-set, my boy. What you need?","What up. Interruptin’ my gains? Better be good, fam.","Ayy, you again? Aight, aight… talk to me."];
+const SLEEPY=["Bruh… it’s late, I was knocked out. …Aight, what’s good?","Yo, I’m sleepin’… but I got you. What up?"];
+function say(t,ms=5000){ const b=$("bubble"); b.textContent=t; b.classList.add("on"); clearTimeout(say.t); say.t=setTimeout(()=>b.classList.remove("on"),ms); }
+function show(svg){ $("scene").innerHTML=svg; $("scene").firstElementChild.classList.add("fade"); }
+function setBtn(){ $("toggleAct").textContent = mode==="sit" ? (nowAct().key==="sleep"?"寝かせてあげる":"トレーニングに戻ってもらう") : mode==="office" ? "ジムに戻る" : "呼ぶ"; }
+function sit(){ cancelAnimationFrame(raf); mode="sit"; show(sitSVG()); say(pick(nowAct().key==="sleep"?SLEEPY:GRUMP)); setBtn(); }
+function act(){ mode="act"; const a=nowAct(); play(a.key); say(a.key==="sleep"?"Zzz……（呼べば起きる）":`（${a.label}中……）One more rep, let’s gooo!`); setBtn(); }
+function office(){ if(mode==="office") return; cancelAnimationFrame(raf); mode="office"; show(officeSVG()); say("Aight, let’s get to work. 事務所モードだ、my boy."); setBtn(); }
+function happy(text,lbl,voice){
+  cancelAnimationFrame(raf); if(mode!=="happy") prevMode=mode; mode="happy";
+  show(happySVG(lbl)); say(text,6500); setBtn();
+  speak(text,voice||{pitch:.8,rate:1});
+  clearTimeout(happy.t); happy.t=setTimeout(()=>{ prevMode==="office"?(mode="",office()):sit(); },6500);
+}
+function updateNow(){
+  const d=new Date(), a=nowAct();
+  $("nowdoing").innerHTML=`${pad(d.getHours())}:${pad(d.getMinutes())}｜予定 <strong>${a.label}</strong>（${a.from}:00〜${a.to}:00）`;
+}
+$("toggleAct").addEventListener("click",()=> mode==="sit"?act():sit());
+updateNow(); setInterval(updateNow,30000);
+{ const a=nowAct(); play(a.key); say(a.key==="sleep"?"Zzz……":`（${a.label}中……）`); setTimeout(()=>{ if(mode==="act") sit(); },2800); }
+
+/* voice */
+let voiceOn=true;
+const hasTTS="speechSynthesis" in window;
+function setVoiceBtn(){ $("voiceBtn").textContent=voiceOn?"🔊 声 ON":"🔇 声 OFF"; $("voiceBtn").setAttribute("aria-pressed",voiceOn); }
+if(!hasTTS) $("voiceBtn").hidden=true; setVoiceBtn();
+const MUTE_LINES=["Oh, so you want me to shut up, huh? ...Aight. I'll be quiet. Whatever.","Bruh. You muting ME? Fine. Not another word, my boy.","Wow. Tellin' Armstrong to be quiet? Aight, aight... I see how it is."];
+$("voiceBtn").addEventListener("click",()=>{
+  if(voiceOn){
+    const line=pick(MUTE_LINES);
+    cancelAnimationFrame(raf); clearTimeout(happy.t); mode="sit"; show(sitSVG()); setBtn();
+    say(line+"\n（俺に黙れってことか…）",6500);
+    speak(line,{pitch:.7,rate:.9});
+    voiceOn=false;
+  } else {
+    voiceOn=true;
+    const line="Yo, I'm back! You missed my voice, huh? Let's gooo!";
+    say(line+"\n（声、復活！）"); speak(line);
+  }
+  setVoiceBtn();
+});
+function enVoice(){
+  const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)); if(!vs.length) return null;
+  const male=["Aaron","Fred","Daniel","Alex","Arthur","Guy","David","Mark","Male","Ralph","Eddy","Reed"];
+  return vs.find(v=>/en[-_]US/i.test(v.lang)&&male.some(m=>v.name.includes(m))) || vs.find(v=>male.some(m=>v.name.includes(m))) || vs.find(v=>/en[-_]US/i.test(v.lang)) || vs[0];
+}
+function enOnly(t){
+  return String(t).split(/要点/)[0].replace(/\p{Extended_Pictographic}/gu," ").replace(/[\u3000-\u30ff\u3400-\u9fff\uff00-\uffef]+/g," ").replace(/[*#>`_]/g," ").replace(/\s+/g," ").trim();
+}
+function speak(text,{pitch=.75,rate=.95}={}){
+  if(!voiceOn||!hasTTS) return; const t=enOnly(text); if((t.match(/[A-Za-z]/g)||[]).length<3) return;
+  speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t.slice(0,600)); u.lang="en-US"; const v=enVoice(); if(v) u.voice=v; u.pitch=pitch; u.rate=rate; speechSynthesis.speak(u);
+}
+if(hasTTS) speechSynthesis.onvoiceschanged=()=>{};
+
+/* slang lesson */
+const SLANG=[
+  {w:"No cap",ja:"マジで／ウソじゃない",when:"本気だよ、と強調したいとき",ex:"This flight is cheap, no cap.",exJa:"この航空券、マジで安いって。"},
+  {w:"Bet",ja:"了解！いいね！",when:"誘いや提案にOKするとき",ex:"Kansai Airport at nine? Bet.",exJa:"関空に9時？了解。"},
+  {w:"Say less",ja:"それ以上言うな、任せろ",when:"相手の頼みをすぐ引き受けるとき",ex:"You need a cheap ticket? Say less.",exJa:"安いチケット？言わなくていい、任せろ。"},
+  {w:"Lowkey",ja:"ちょっと／ひそかに",when:"控えめに本音を言うとき",ex:"I'm lowkey tired after leg day.",exJa:"脚の日のあとで、正直ちょっと疲れてる。"},
+  {w:"It's lit",ja:"最高に盛り上がってる",when:"イベントや場がアツいとき",ex:"The welcome party was lit!",exJa:"歓迎会、めっちゃ盛り上がった！"},
+  {w:"GOAT",ja:"史上最高（Greatest Of All Time）",when:"人をめちゃくちゃ褒めるとき",ex:"You brought me protein? You the GOAT.",exJa:"プロテインくれたの？お前最高だな。"},
+  {w:"Drip",ja:"おしゃれ・イケてる服装",when:"服装を褒めるとき",ex:"Yo, that jacket? Major drip.",exJa:"そのジャケット、めっちゃイケてる。"},
+  {w:"Hits different",ja:"いつもと違って格別",when:"特別においしい・良いと感じたとき",ex:"Chai in Kathmandu hits different.",exJa:"カトマンズのチヤは格別だな。"},
+  {w:"Bussin'",ja:"めっちゃうまい",when:"食べ物を絶賛するとき",ex:"This dal bhat is bussin'.",exJa:"このダルバート、めっちゃうまい。"},
+  {w:"Salty",ja:"すねてる／根に持ってる",when:"負けて不機嫌な人をいじるとき",ex:"Why you salty? I just won at arm wrestling.",exJa:"なにすねてんだよ、腕相撲で勝っただけだろ。"},
+  {w:"Flex",ja:"見せびらかす",when:"自慢している人に",ex:"He's flexing his new passport photo.",exJa:"あいつ新しいパスポート写真を自慢してるぜ。"},
+  {w:"That's a W",ja:"勝ち！いい結果！",when:"うまくいったとき（逆は「That's an L」）",ex:"Found a ticket under budget? That's a W.",exJa:"予算内のチケット見つけた？大勝利だな。"},
+  {w:"Aight",ja:"オーライ（All right）",when:"軽く了解・切り替えるとき",ex:"Aight, let's get to work.",exJa:"よし、仕事しようぜ。"},
+  {w:"I got you",ja:"任せろ／俺がついてる",when:"頼られたとき・助けるとき",ex:"Need a pickup at Kansai? I got you.",exJa:"関空の迎え？任せろ。"},
+  {w:"Deadass",ja:"マジで（本気）",when:"冗談じゃないと伝えるとき",ex:"I'm deadass hungry right now.",exJa:"今マジで腹ペコ。"},
+  {w:"Let's gooo",ja:"よっしゃー！",when:"喜び・気合いを入れるとき",ex:"Visa approved? Let's gooo!",exJa:"許可おりた？よっしゃー！"},
+  {w:"Good vibes",ja:"いい雰囲気・いいノリ",when:"場所や人の雰囲気を褒めるとき",ex:"This office got good vibes.",exJa:"この事務所、雰囲気いいな。"},
+  {w:"Slaps",ja:"（音楽などが）最高",when:"曲や作品を絶賛するとき",ex:"This workout playlist slaps.",exJa:"この筋トレ用プレイリスト最高。"},
+  {w:"Fam",ja:"仲間・身内",when:"親しい相手への呼びかけ",ex:"What's good, fam?",exJa:"調子どうよ、仲間。"},
+  {w:"My bad",ja:"ごめん、俺のミス",when:"軽く謝るとき",ex:"My bad, wrong airport code.",exJa:"ごめん、空港コード間違えた。"}
+];
+let slangIdx=-1;
+function teach(again){
+  if(!again){ let i; do{ i=Math.floor(Math.random()*SLANG.length); }while(i===slangIdx&&SLANG.length>1); slangIdx=i; }
+  const s=SLANG[slangIdx];
+  $("slangCard").hidden=false;
+  $("slangCard").innerHTML=`<div class="w">${esc(s.w)}</div><div class="ja">${esc(s.ja)}</div>
+    <p>こういう時に使うぜ：${esc(s.when)}</p>
+    <p class="ex"><strong>${esc(s.ex)}</strong><br>${esc(s.exJa)}</p>
+    <div class="row"><button class="linkbtn" data-sl="again">🔊 もう一回聞く</button><button class="linkbtn" data-sl="next">次のスラング</button></div>`;
+  say(`Yo, listen up my boy! 今日のスラングは「${s.w}」だ。`);
+  speak(`Yo, listen up my boy. Today's word: ${s.w}. Like this: ${s.ex}`,{pitch:.75,rate:.92});
+}
+$("slangBtn").addEventListener("click",()=>teach(false));
+$("slangCard").addEventListener("click",e=>{ const a=e.target.dataset.sl; if(a) teach(a==="again"); });
+
+/* tease mode */
+const TEASE=[
+  {en:"Meow meow meow~ Look at you, scared of one push-up! Meow~",ja:"ミャオミャオ〜 腕立て1回でビビってんの？ミャオ〜"},
+  {en:"Meeeow~ You call that a bicep? That's a kitten arm, my boy! Meow meow~",ja:"ミャ〜オ それ力こぶ？子猫の腕じゃん！ミャオミャオ〜"},
+  {en:"Meow meow! Who forgot the protein again? Meow~",ja:"ミャオミャオ！またプロテイン忘れたの誰だ〜？ミャオ〜"},
+  {en:"Meow~ You booked the expensive ticket? Meow meow, rookie mistake!",ja:"ミャオ〜 高いチケット取っちゃった？ミャオミャオ、初心者だな〜！"}
+];
+$("teaseBtn").addEventListener("click",()=>{
+  const t=pick(TEASE);
+  happy(`${t.en}\n${t.ja}`,"MEOW~ 😼",{pitch:2,rate:1.15});
+});
+
+/* SNS post slang */
+const SNS=[
+  {id:"drive",label:"🚗 運転中",place:"the road",note:"投稿は必ず停車中にしろよ、my boy。",posts:[
+    ["Windows down, music up. Just cruisin' 🚗💨 #roadtrip #goodvibes","窓全開、音楽MAX。ただドライブ中。"],
+    ["Me, the road, and a playlist that slaps. No cap. 🎶 #drivingvibes","俺と道と最高のプレイリスト。マジで。"],
+    ["Long drive, but the vibes are immaculate ✨ #onthemove","長距離だけど、雰囲気は完璧。"]]},
+  {id:"view",label:"🏞️ 景色を撮ってる",place:"this view",posts:[
+    ["This view hits different 😮‍💨 #nofilter #views","この景色、格別だわ。"],
+    ["Pics don't do it justice, deadass. 📸 #scenery","写真じゃ伝わらない、マジで。"],
+    ["Lowkey can't stop staring at this. 🌄 #naturevibes","正直、ずっと見とれる。"]]},
+  {id:"sea",label:"🌊 海",place:"the beach",posts:[
+    ["Ocean vibes only 🌊 #beachday #saltlife","海のノリだけでいい。"],
+    ["Sun's out, waves up, stress gone. Let's gooo ☀️ #seaside","太陽、波、ストレスゼロ。よっしゃー！"],
+    ["Found my happy place, no cap. 🐚 #oceanview","俺の幸せな場所、見つけた。マジで。"]]},
+  {id:"mountain",label:"🏔️ 山",place:"the mountains",posts:[
+    ["Top of the world rn 🏔️ #himalayas #mountainvibes","今、世界のてっぺん。"],
+    ["Air so fresh it hits different. 🌲 #mountainlife","空気がうますぎて格別。"],
+    ["Climbed all the way up here just to say: W. 🙌 #summit","ここまで登ってきて一言：大勝利。"]]},
+  {id:"trip",label:"✈️ 空港・出張",place:"the airport",posts:[
+    ["Business trip mode: ON ✈️ Let's get this bread. #businesstrip #onthemove","出張モードON。稼いでくるぜ。"],
+    ["Kathmandu, I'm back! Bet it's gonna be a W trip. 🇳🇵 #Nepal #businesstrip","カトマンズ、戻ってきたぜ！絶対いい出張になる。"],
+    ["Just landed. Grind don't stop. 🛬 #jetsetter #worktravel","今着いた。仕事は止まらねぇ。"]]},
+  {id:"gym",label:"💪 ジム",place:"the gym",posts:[
+    ["No days off. 💪 #gymlife #grind","休みなし。"],
+    ["Leg day? More like legend day. 🔥 #fitness","脚の日？伝説の日だろ。"],
+    ["Protein in, excuses out. Let's gooo! 🥤 #gains","プロテインは飲む、言い訳は捨てる。よっしゃー！"]]},
+  {id:"food",label:"🍛 ごはん",place:"the table",posts:[
+    ["This dal bhat is bussin' fr 🍛 #foodie #nepalifood","このダルバート、ガチでうまい。"],
+    ["Ate good today, no cap. 😋 #eats","今日はいいもん食った、マジで。"],
+    ["My diet said no. My heart said bet. 🍜 #cheatday","ダイエットはダメって言った。心は「了解」って言った。"]]},
+  {id:"night",label:"🌃 夜景",place:"the city",posts:[
+    ["City lights hit different at night 🌃 #nightview","夜の街の光は格別。"],
+    ["Late night, good vibes, no complaints. ✨ #citylights","夜更かし、いい雰囲気、文句なし。"],
+    ["Main character energy in this city tonight. 🌙","今夜のこの街、俺が主人公。"]]},
+  {id:"team",label:"🤝 仲間と",place:"the squad",posts:[
+    ["The squad is undefeated 🤝 #teamwork #fam","このチーム、無敗。"],
+    ["Good people, good energy. That's the whole post. ❤️ #squad","いい仲間、いいエネルギー。以上。"],
+    ["Work hard with the fam, celebrate with the fam. 🎉 #FLYYOU","仲間と全力で働いて、仲間と祝う。"]]},
+  {id:"after",label:"🌅 仕事終わり",place:"the office",posts:[
+    ["Clocked out. Vibes: activated. 😎 #afterwork","退勤。ノリ、起動。"],
+    ["Another day, another W. 🙌 #grindmode","今日も勝ち。"],
+    ["Work's done. Chill time. Say less. 🛋️ #weekendvibes","仕事終わり。ここからはゆっくり。以上。"]]}
+];
+let snsSit=null;
+function renderSNS(){
+  const s=SNS.find(x=>x.id===snsSit);
+  $("snsBox").innerHTML=`<div class="sitchips" role="group" aria-label="シチュエーション">${SNS.map(x=>`<button data-sit="${x.id}" aria-pressed="${x.id===snsSit}">${x.label}</button>`).join("")}</div>
+  ${s?`${s.note?`<p class="warn" style="margin:0 0 4px">${esc(s.note)}</p>`:""}${s.posts.map((p,i)=>`<div class="post"><p class="en">${esc(p[0])}</p><p class="pja">${esc(p[1])}</p>
+    <div class="acts"><button class="cp" data-cp="${i}">コピー</button><button class="sp" data-sp="${i}">🔊 聞く</button></div></div>`).join("")}`
+  :`<p class="empty" style="margin:0">シチュエーションを選ぶと、そのまま貼れる投稿文を出すぜ。</p>`}`;
+}
+const forSpeech=t=>t.replace(/#\S+/g," ");
+async function copyText(t,btn){
+  let ok=false;
+  try{ await navigator.clipboard.writeText(t); ok=true; }catch{
+    const ta=document.createElement("textarea"); ta.value=t; ta.setAttribute("readonly",""); ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select(); try{ ok=document.execCommand("copy"); }catch{} ta.remove();
+  }
+  btn.textContent=ok?"コピーしました":"文を長押しでコピー";
+  setTimeout(()=>btn.textContent="コピー",1800);
+}
+$("snsBtn").addEventListener("click",()=>{
+  const box=$("snsBox"); box.hidden=!box.hidden;
+  if(!box.hidden){ renderSNS(); say("Yo, posting on socials? Pick the vibe, I got you, my boy.\n（SNSの投稿文、任せろ！）"); speak("Yo, posting on socials? Pick the vibe. I got you, my boy."); }
+});
+$("snsBox").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.sit){
+    snsSit=b.dataset.sit; renderSNS(); const s=SNS.find(x=>x.id===snsSit);
+    say(`Posting from ${s.place}? Try this one:\n${s.posts[0][0]}`); speak(`Posting from ${s.place}? Try this one. ${forSpeech(s.posts[0][0])}`);
+  }
+  const s=SNS.find(x=>x.id===snsSit); if(!s) return;
+  if(b.dataset.cp!=null) copyText(s.posts[+b.dataset.cp][0],b);
+  if(b.dataset.sp!=null) speak(forSpeech(s.posts[+b.dataset.sp][0]));
+});
+
+/* protein */
+let givers=[], pdb=null;
+const PKEY="armstrong-protein", NKEY="armstrong-myname";
+const gid=n=>{ let x=0; for(const ch of n) x=(x*31+ch.codePointAt(0))>>>0; return "g"+x.toString(36); };
+function renderGivers(){
+  if(!givers.length){ $("givers").textContent="まだ誰もプロテインをあげていません。"; return; }
+  $("givers").innerHTML="プロテインをくれた人："+givers.slice(0,10).map(g=>`<b>${esc(g.name)}</b>×${g.count}`).join("　");
+}
+$("pGive").addEventListener("click",()=>{
+  $("pForm").hidden=!$("pForm").hidden;
+  if(!$("pForm").hidden){ try{ $("pName").value=localStorage.getItem(NKEY)||""; }catch{} $("pName").focus(); }
+});
+$("pSend").addEventListener("click",async()=>{
+  const name=$("pName").value.trim().slice(0,20);
+  if(!name){ $("pName").focus(); say("Yo, who dis? 名前教えてくれよ、my boy!"); return; }
+  try{ localStorage.setItem(NKEY,name); }catch{}
+  const id=gid(name); const prev=givers.find(g=>g.id===id); const count=(prev?prev.count:0)+1;
+  const rec={name,count,last:Date.now()};
+  if(pdb){ pdb.collection("protein").doc(id).set(rec).catch(()=>{}); }
+  else{ givers=[{...rec,id},...givers.filter(g=>g.id!==id)].sort((a,b)=>b.count-a.count); try{localStorage.setItem(PKEY,JSON.stringify(givers));}catch{} renderGivers(); }
+  $("pForm").hidden=true;
+  happy(count===1 ? `YO!! PROTEIN?! ${name}, you the GOAT! 名前、一生覚えとくぜ my boy!! 💪`
+    : `${name}!! My dawg came back! それで${count}本目だろ？ I never forget, fam! LET’S GOOO!! 💪`);
+});
+(async()=>{
+  try{ pdb=await claude.use("db"); }catch{ pdb=null; }
+  if(!pdb){ try{ givers=JSON.parse(localStorage.getItem(PKEY))||[]; }catch{ givers=[]; } renderGivers(); return; }
+  pdb.collection("protein").orderBy("count","desc").limit(50).onSnapshot(s=>{ givers=s.docs.map(d=>({...d.data(),id:d.id})); renderGivers(); },()=>{});
+})();
+renderGivers();
+
+/* ================= common ================= */
+const AIRPORTS = {
+  KTM:"カトマンズ", KIX:"大阪（関西）", NRT:"東京（成田）", HND:"東京（羽田）", OKA:"那覇", NGO:"名古屋（中部）", FUK:"福岡",
+  BKK:"バンコク（スワンナプーム）", DMK:"バンコク（ドンムアン）", RGN:"ヤンゴン", CGK:"ジャカルタ", DPS:"デンパサール（バリ）",
+  PVG:"上海（浦東）", PEK:"北京（首都）", PKX:"北京（大興）", CAN:"広州", KMG:"昆明", CTU:"成都",
+  DAC:"ダッカ", MNL:"マニラ", ICN:"ソウル（仁川）", DEL:"デリー", KUL:"クアラルンプール", SIN:"シンガポール", HKG:"香港", TPE:"台北（桃園）"
+};
+const today=new Date(); const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const plus=n=>{ const d=new Date(today); d.setDate(d.getDate()+n); return iso(d); };
+const yymmdd=s=>s?s.slice(2,4)+s.slice(5,7)+s.slice(8,10):"";
+const md=s=>s?`${+s.slice(5,7)}/${+s.slice(8,10)}`:"";
+const WD="日月火水木金土";
+const wd=s=>WD[new Date(s+"T00:00:00").getDay()];
+function oneWay(o,d,date,pax){
+  const so=o.toLowerCase(), sd=d.toLowerCase(), to=so, td=sd;
+  return {
+    sky:`https://www.skyscanner.jp/transport/flights/${so}/${sd}/${yymmdd(date)}/?adultsv2=${pax}&cabinclass=economy&locale=ja-JP&currency=JPY&market=JP`,
+    trip:`https://jp.trip.com/flights/showfarefirst?triptype=ow&dcity=${to}&acity=${td==="tyoa"?"tyo":td}&ddate=${date}&class=y&quantity=${pax}&curr=JPY&locale=ja-JP`
+  };
+}
+$("ap").innerHTML = Object.entries(AIRPORTS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
+for(let i=1;i<=9;i++){ $("pax").insertAdjacentHTML("beforeend",`<option>${i}</option>`); $("ePax").insertAdjacentHTML("beforeend",`<option>${i}</option>`); }
+
+function toast(text,btn,fn){
+  const h=$("toastHost"); h.innerHTML=`<div class="toast" role="status"><span>${esc(text)}</span>${btn?`<button>${esc(btn)}</button>`:""}</div>`;
+  if(btn) h.querySelector("button").onclick=()=>{ h.innerHTML=""; fn(); };
+  clearTimeout(toast.t); toast.t=setTimeout(()=>h.innerHTML="",9000);
+}
+
+/* ================= storage (shared db, fallback local) ================= */
+let db=null, plans=[], openId=null;
+const LKEY="armstrong-plans";
+const local={ all(){ try{return JSON.parse(localStorage.getItem(LKEY))||[];}catch{return [];} }, put(a){ try{localStorage.setItem(LKEY,JSON.stringify(a));}catch{} } };
+async function savePlan(id,obj){
+  if(db){ await db.collection("plans").doc(id).set(obj); return; }
+  const a=local.all().filter(p=>p.id!==id); a.unshift({...obj,id}); local.put(a.slice(0,50)); plans=local.all(); renderPlans();
+}
+async function patchPlan(id,patch){
+  if(db){ await db.collection("plans").doc(id).update(patch); return; }
+  const a=local.all().map(p=>p.id===id?{...p,...patch}:p); local.put(a); plans=a; renderPlans();
+}
+async function deletePlan(id){
+  if(db){ await db.collection("plans").doc(id).delete(); return; }
+  local.put(local.all().filter(p=>p.id!==id)); plans=local.all(); renderPlans();
+}
+let loadTimer=setTimeout(()=>{ if(!db){ plans=local.all(); renderPlans(); } },10000);
+(async()=>{
+  try{ db=await claude.use("db"); }catch{ db=null; }
+  if(!db){ clearTimeout(loadTimer); plans=local.all(); renderPlans(); return; }
+  db.collection("plans").orderBy("createdAt","desc").limit(100).onSnapshot(snap=>{
+    clearTimeout(loadTimer);
+    plans=snap.docs.map(d=>({...d.data(),id:d.id})); renderPlans();
+  },()=>{ clearTimeout(loadTimer); $("plist").innerHTML=`<li class="empty">一覧を読み込めませんでした。ページを開き直してください。</li>`; });
+})();
+renderPlans();
+
+/* ================= entry plan ================= */
+const COUNTRY={
+  "NP":{name:"ネパール",ap:"KTM"},"MM":{name:"ミャンマー",ap:"RGN"},"ID":{name:"インドネシア",ap:"CGK"},
+  "CN-PVG":{name:"中国（上海）",ap:"PVG"},"CN-PEK":{name:"中国（北京）",ap:"PEK"},"CN-CAN":{name:"中国（広州）",ap:"CAN"}
+};
+const REGION={
+  west:{name:"西日本",label:"関西空港（KIX）",codes:["KIX"],search:"kix"},
+  kanto:{name:"関東",label:"成田（NRT）・羽田（HND）",codes:["NRT","HND"],search:"tyoa"},
+  okinawa:{name:"沖縄",label:"那覇空港（OKA）",codes:["OKA"],search:"oka"}
+};
+let region="west";
+document.querySelectorAll(".seg3 button").forEach(b=>b.addEventListener("click",()=>{
+  region=b.dataset.r; document.querySelectorAll(".seg3 button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+}));
+$("eFrom").min=$("eTo").min=iso(today); $("eFrom").value=plus(30);
+$("eFrom").addEventListener("input",()=>{ $("eTo").min=$("eFrom").value; });
+
+const ENTRY_RULES=`あなたは株式会社FLYYOU（神戸の登録支援機関）のAI社員アームストロング（航空券担当）。外国人材（特定技能など、在留資格を持たずに新規入国する人）の来日便の「入国プラン」を作る。
+ルール：
+- あなたはリアルタイムの運賃・空席・時刻表を取得できない。金額は書かない。便名・時刻を断定しない。到着時間帯は「朝」「午後」など一般的な目安として書き、必ず「便により異なる・予約時に要確認」と分かる表現にする。
+- 同一航空会社・同一予約の通し航空券を優先。乗継国で通過ビザが必要になりやすいルートは避ける（ネパールならバンコク経由・タイ国際航空などを基本候補）。ビザの要否は断定せず「航空会社・大使館の公式情報で要確認」とする。
+- 受け入れ空港：西日本は関西空港、関東は成田・羽田、沖縄は那覇空港。那覇は国際線の直行便が限られるため、乗継（国内線含む）の注意点と、新規入国の空港での在留カードの交付状況は出入国在留管理庁の公式情報で要確認と書く。
+- 新規入国では、着陸後に入国審査・在留カード・荷物受取で時間がかかる（目安60〜120分）ことを踏まえて迎えのアドバイスを書く。
+- 日本語。短く分かりやすく。ネパール人スタッフにも読みやすい言葉で。`;
+
+$("eMake").addEventListener("click", async()=>{
+  const from=$("eFrom").value, to=$("eTo").value||"";
+  const err = !from ? "到着希望日を選んでください。" : (to && to<from) ? "「この日まで」は到着希望日以降を選んでください。"
+    : (to && (new Date(to)-new Date(from))/864e5>13) ? "期間は2週間以内にしてください。" : "";
+  $("eErr").hidden=!err; $("eErr").textContent=err; if(err) return;
+  const c=COUNTRY[$("eCountry").value], r=REGION[region];
+  const input={country:c.name, origin:c.ap, region, regionName:r.name, dest:r.label, from, to:to||from, pax:+$("ePax").value, memo:$("eMemo").value.trim()};
+  const id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const doc={status:"making", input, createdAt:Date.now()};
+  try{ await savePlan(id,doc); }catch{ $("eErr").hidden=false; $("eErr").textContent="保存できませんでした。このページを編集できる権限があるか確認してください。"; return; }
+  $("eMemo").value="";
+  toast(`${c.name}→${r.name}の入国プランを作っています…`);
+  openId=id; renderPlans();
+  location.hash="plans";
+  generate(id,input);
+});
+
+let sampleFn=null;
+const sampleReady=(async()=>{ try{ sampleFn=await claude.use("sample"); }catch{} return sampleFn; })();
+async function generate(id,input){
+  await sampleReady;
+  if(!sampleFn){ await patchPlan(id,{status:"error",error:"この表示ではアームストロングに依頼できません。"}).catch(()=>{}); return; }
+  const prompt=`${ENTRY_RULES}
+
+条件：
+出発国：${input.country}（出発空港 ${input.origin}）
+受け入れ：${input.regionName}／到着空港 ${input.dest}
+到着希望：${input.from}〜${input.to}
+人数：${input.pax}名
+メモ：${input.memo||"なし"}
+
+次の形のJSONだけで答える：
+{"headline":"結論を1〜2文","best_days":"期間内でどの曜日・日付が狙い目かの考え方（断定しない）",
+"routes":[{"title":"ルート名（例：バンコク経由）","airline":"航空会社","via":"経由地","same_airline":true,"transit_visa":"通過ビザの注意","arrival_window":"到着時間帯の目安","comment":"おすすめ理由"}],
+"pickup":{"meet_point":"空港内の合流場所の目安","advice":"迎えの段取りのアドバイス"},
+"checklist":["出発前・到着時の確認事項"],
+"armstrong":"アームストロング（黒人男性・筋トレ好き）の英語スラング交じりの一言＋短い日本語訳"}
+routesは2〜3件。`;
+  try{
+    const plan=await sampleFn.json(prompt,{modelTier:"default"});
+    if(!plan || !Array.isArray(plan.routes)) throw new Error("bad");
+    await patchPlan(id,{status:"done",plan,doneAt:Date.now()});
+    toast(`✈️ 入国プランが見つかりました（${input.country}→${input.regionName}）`,"見る",()=>{ openId=id; renderPlans(); location.hash="plans"; });
+  }catch(e){
+    const msg = e&&e.code==="rate_limited" ? "混み合っています。少し待ってから作り直してください。" : e&&e.code==="not_granted" ? "アームストロングへの依頼が許可されていません。" : "プランを作れませんでした。作り直してください。";
+    await patchPlan(id,{status:"error",error:msg}).catch(()=>{});
+  }
+}
+
+function statusBadge(p){
+  if(p.status==="done") return `<span class="badge done">プランあり</span>`;
+  if(p.status==="error") return `<span class="badge error">作り直しが必要</span>`;
+  const stale=Date.now()-(p.createdAt||0)>180000;
+  return stale?`<span class="badge error">中断</span>`:`<span class="badge making">作成中…</span>`;
+}
+function renderPlans(){
+  const ul=$("plist");
+  if(!plans.length){ ul.innerHTML=`<li class="empty" style="padding:6px 0">まだありません。上の「入国プランを作る」で、国・地域・到着日を入れて作成してください。</li>`; $("detail").innerHTML=""; return; }
+  ul.innerHTML=plans.map(p=>{ const i=p.input||{};
+    return `<li><button class="pitem" data-id="${esc(p.id)}" aria-expanded="${p.id===openId}">
+      <span><span class="r code">${esc(i.origin)} → ${esc((REGION[i.region]||{}).codes?.join("/")||"")}</span><br>
+      <span class="empty">${esc(i.country)}→${esc(i.regionName)}｜${md(i.from)}${i.to&&i.to!==i.from?"〜"+md(i.to):""}着希望｜${esc(i.pax)}名</span></span>
+      ${statusBadge(p)}</button></li>`; }).join("");
+  renderDetail();
+}
+$("plist").addEventListener("click",e=>{ const b=e.target.closest(".pitem"); if(!b) return; openId = openId===b.dataset.id?null:b.dataset.id; renderPlans(); });
+
+function addMin(hhmm,min){ const [h,m]=hhmm.split(":").map(Number); const t=h*60+m+min; const dd=Math.floor(t/1440); const r=((t%1440)+1440)%1440; return {time:`${pad(Math.floor(r/60))}:${pad(r%60)}`,next:dd>0}; }
+function renderDetail(){
+  const p=plans.find(x=>x.id===openId); const box=$("detail");
+  if(!p){ box.innerHTML=""; return; }
+  const i=p.input||{}, r=REGION[i.region]||REGION.west;
+  if(p.status!=="done"){
+    const stale=p.status==="error"||Date.now()-(p.createdAt||0)>180000;
+    box.innerHTML=`<div class="detail"><p>${stale?esc(p.error||"作成が途中で止まりました。"):"アームストロングがプランを作っています。少し待ってください。"}</p>
+      <div class="askrow">${stale?`<button class="btn primary grow" data-act="retry">作り直す</button>`:""}<button class="btn ghost" data-act="del">削除</button></div></div>`;
+    return;
+  }
+  const pl=p.plan||{};
+  const days=[]; for(let d=new Date(i.from+"T00:00:00"); iso(d)<=i.to && days.length<14; d.setDate(d.getDate()+1)) days.push(iso(d));
+  const routes=(pl.routes||[]).map(rt=>`<div class="rcard"><div class="t">${esc(rt.title)}</div>
+    <div class="tags">${rt.airline?`<span class="tag">${esc(rt.airline)}</span>`:""}${rt.via?`<span class="tag">経由：${esc(rt.via)}</span>`:""}${rt.same_airline?`<span class="tag">同一航空会社</span>`:`<span class="tag red">航空会社の乗換あり</span>`}</div>
+    ${rt.arrival_window?`<div style="font-size:13px">到着の目安：${esc(rt.arrival_window)}</div>`:""}
+    ${rt.transit_visa?`<div class="warn">通過ビザ：${esc(rt.transit_visa)}</div>`:""}
+    ${rt.comment?`<div style="font-size:13px;color:var(--muted);margin-top:4px">${esc(rt.comment)}</div>`:""}</div>`).join("");
+  const arr=p.arrival||"", buf=p.buffer||90;
+  let tl=`<p class="empty">航空券が決まったら、到着時刻を入れるとピックアップ時刻を計算します。</p>`;
+  if(arr){ const pk=addMin(arr,buf), car=addMin(arr,buf-20);
+    tl=`<div class="tl">
+      <span class="tm code">${arr}</span><span class="ds">${esc(p.arrivalAirport||r.codes[0])} に着陸${p.arrivalDate?`（${md(p.arrivalDate)}・${wd(p.arrivalDate)}）`:""}</span>
+      <span class="tm code" style="color:var(--muted)">＋${buf}分</span><span class="ds">入国審査・在留カード・荷物受取</span>
+      <span class="tm code">${car.time}</span><span class="ds">迎えの車・担当者が到着ロビーに着いておく${car.next?"（翌日）":""}</span>
+      <span class="tm code" style="color:var(--crimson)">${pk.time}</span><span class="ds"><strong>到着ロビーで合流（ピックアップ目安）</strong>${pk.next?"（翌日）":""}</span></div>`; }
+  box.innerHTML=`<div class="detail">
+    <h3>アームストロングの結論</h3>
+    <p style="margin:0">${esc(pl.headline)}</p>
+    ${pl.best_days?`<p class="hint" style="margin-top:4px">${esc(pl.best_days)}</p>`:""}
+    <h3>おすすめルート</h3>${routes}
+    <h3>ピックアップ（${esc(r.label)}）</h3>
+    ${pl.pickup?.meet_point?`<p style="margin:0;font-size:14px">合流場所の目安：${esc(pl.pickup.meet_point)}</p>`:""}
+    ${pl.pickup?.advice?`<p class="hint" style="margin-top:2px">${esc(pl.pickup.advice)}</p>`:""}
+    ${tl}
+    <div class="calc">
+      <label class="f">到着日<input type="date" id="cDate" value="${esc(p.arrivalDate||i.from)}"></label>
+      <label class="f">到着時刻（航空券）<input type="time" id="cTime" value="${esc(arr)}"></label>
+      <label class="f">到着空港<select id="cAp">${r.codes.map(c=>`<option ${c===(p.arrivalAirport||r.codes[0])?"selected":""}>${c}</option>`).join("")}</select></label>
+      <label class="f">審査・荷物の余裕<select id="cBuf">${[60,90,120].map(m=>`<option value="${m}" ${m===buf?"selected":""}>${m}分</option>`).join("")}</select></label>
+    </div>
+    <div class="askrow"><button class="btn ghost grow" data-act="calc">ピックアップ時刻を計算して保存</button></div>
+    <h3>日付ごとの航空券検索（片道）</h3>
+    <table class="links"><tbody>${days.map(d=>{ const u=oneWay(i.origin,r.search,d,i.pax); return `<tr><td><span class="code" style="font-weight:700;font-size:16px">${md(d)}</span>（${wd(d)}）</td><td style="text-align:right"><a href="${u.sky}" target="_blank" rel="noopener">スカイスキャナー</a><a href="${u.trip}" target="_blank" rel="noopener">Trip.com</a></td></tr>`; }).join("")}</tbody></table>
+    ${(pl.checklist||[]).length?`<h3>確認リスト</h3><ul class="rules">${pl.checklist.map(c=>`<li>${esc(c)}</li>`).join("")}</ul>`:""}
+    ${pl.armstrong?`<div class="say"><span class="face">💪</span><span>${esc(pl.armstrong)}</span></div>`:""}
+    <p class="hint">時刻・ルートは目安です。運賃・便の時刻・通過ビザの要否は、予約前に各サイト・航空会社・大使館の公式情報で確認してください。</p>
+    <div class="askrow"><button class="btn ghost" data-act="retry">作り直す</button><button class="btn ghost" data-act="del">削除</button></div>
+  </div>`;
+}
+$("detail").addEventListener("click", async e=>{
+  const a=e.target.dataset.act; if(!a||!openId) return;
+  const p=plans.find(x=>x.id===openId); if(!p) return;
+  if(a==="del"){ if(confirm("この入国プランを削除しますか？")){ const id=openId; openId=null; await deletePlan(id).catch(()=>toast("削除できませんでした。")); } }
+  if(a==="retry"){ await patchPlan(p.id,{status:"making",createdAt:Date.now(),error:""}).catch(()=>{}); generate(p.id,p.input); }
+  if(a==="calc"){
+    const t=$("cTime").value; if(!t){ toast("到着時刻を入れてください。"); return; }
+    await patchPlan(p.id,{arrival:t,arrivalDate:$("cDate").value,arrivalAirport:$("cAp").value,buffer:+$("cBuf").value}).catch(()=>toast("保存できませんでした。"));
+  }
+});
+
+/* ================= flight search ================= */
+const PRESETS=[["KTM","KIX"],["KIX","KTM"],["KTM","NRT"],["KTM","OKA"],["RGN","KIX"],["CGK","KIX"],["PVG","KIX"],["KIX","PVG"]];
+let type="rt";
+let segs=[{o:"KTM",d:"BKK",date:plus(30)},{o:"BKK",d:"KIX",date:plus(31)}];
+$("d1").min=$("d2").min=iso(today); $("d1").value=plus(30); $("d2").value=plus(44);
+$("presets").innerHTML=PRESETS.map(([o,d])=>`<button class="chip" data-o="${o}" data-d="${d}"><span class="code">${o}</span> → <span class="code">${d}</span></button>`).join("");
+$("presets").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; setType(type==="mc"?"rt":type); $("o").value=b.dataset.o; $("d").value=b.dataset.d; update(); });
+const code=v=>(v||"").trim().toUpperCase().slice(0,3);
+const valid=c=>/^[A-Z]{3}$/.test(c);
+const city=c=>AIRPORTS[c]||(valid(c)?c:"—");
+function setType(t){
+  type=t;
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===t));
+  $("typeLabel").textContent={ow:"片道",rt:"往復",mc:"周遊"}[t];
+  $("simple").hidden=t==="mc"; $("multi").hidden=t!=="mc"; $("mcNote").hidden=t!=="mc";
+  $("retWrap").style.visibility=t==="rt"?"visible":"hidden";
+  if(t==="mc") renderSegs();
+  update();
+}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>setType(b.dataset.t)));
+function renderSegs(){
+  $("segs").innerHTML=segs.map((s,i)=>`<div class="seg">
+    <div class="seg-title"><span>区間 ${i+1}</span>${segs.length>2?`<button class="linkbtn" data-del="${i}">削除</button>`:""}</div>
+    <div class="grid" style="grid-template-columns:1fr 1fr">
+      <label class="f">出発地<input list="ap" data-i="${i}" data-k="o" value="${esc(s.o)}"></label>
+      <label class="f">到着地<input list="ap" data-i="${i}" data-k="d" value="${esc(s.d)}"></label>
+    </div>
+    <label class="f" style="margin-top:8px">出発日<input type="date" min="${iso(today)}" data-i="${i}" data-k="date" value="${esc(s.date)}"></label></div>`).join("");
+  $("addSeg").hidden=segs.length>=4;
+}
+$("segs").addEventListener("input",e=>{ const el=e.target; if(el.dataset.i==null) return; segs[+el.dataset.i][el.dataset.k]=el.value; update(); });
+$("segs").addEventListener("click",e=>{ const i=e.target.dataset.del; if(i==null) return; segs.splice(+i,1); renderSegs(); update(); });
+$("addSeg").addEventListener("click",()=>{ const last=segs[segs.length-1]; segs.push({o:last.d,d:"",date:last.date}); renderSegs(); update(); });
+$("swap").addEventListener("click",()=>{ const t=$("o").value; $("o").value=$("d").value; $("d").value=t; update(); });
+["o","d","d1","d2","pax","cabin"].forEach(id=>$(id).addEventListener("input",update));
+function current(){ return {type,o:code($("o").value),d:code($("d").value),d1:$("d1").value,d2:$("d2").value,pax:$("pax").value,cabin:$("cabin").value,segs:segs.map(s=>({o:code(s.o),d:code(s.d),date:s.date}))}; }
+function check(c){
+  if(c.type==="mc"){
+    for(const [i,s] of c.segs.entries()){
+      if(!valid(s.o)||!valid(s.d)) return `区間${i+1}の空港を3文字コード（例：KTM）で入力してください。`;
+      if(!s.date) return `区間${i+1}の出発日を選んでください。`;
+      if(i>0&&s.date<c.segs[i-1].date) return `区間${i+1}の日付が前の区間より前になっています。`;
+    }
+    return "";
+  }
+  if(!valid(c.o)||!valid(c.d)) return "空港を3文字コード（例：KTM、KIX）で入力してください。";
+  if(c.o===c.d) return "出発地と到着地が同じです。";
+  if(!c.d1) return "出発日を選んでください。";
+  if(c.type==="rt"&&(!c.d2||c.d2<c.d1)) return "帰りの日を出発日以降で選んでください。";
+  return "";
+}
+const CAB_TRIP={economy:"y",premiumeconomy:"s",business:"c"};
+function urls(c){
+  const q=`adultsv2=${c.pax}&cabinclass=${c.cabin}&locale=ja-JP&currency=JPY&market=JP`;
+  if(c.type==="mc"){
+    const path=c.segs.map(s=>`${s.o.toLowerCase()}/${s.date}/${s.d.toLowerCase()}`).join("/");
+    return {sky:`https://www.skyscanner.jp/transport/d/${path}/?${q}`,
+      trip:`https://jp.trip.com/flights/showfarefirst?triptype=mt&dcity=${c.segs.map(s=>s.o.toLowerCase()).join(",")}&acity=${c.segs.map(s=>s.d.toLowerCase()).join(",")}&ddate=${c.segs.map(s=>s.date).join(",")}&class=${CAB_TRIP[c.cabin]}&quantity=${c.pax}&curr=JPY&locale=ja-JP`};
+  }
+  return {sky:`https://www.skyscanner.jp/transport/flights/${c.o.toLowerCase()}/${c.d.toLowerCase()}/${yymmdd(c.d1)}/${c.type==="rt"?yymmdd(c.d2)+"/":""}?${q}`,
+    trip:`https://jp.trip.com/flights/showfarefirst?triptype=${c.type}&dcity=${c.o.toLowerCase()}&acity=${c.d.toLowerCase()}&ddate=${c.d1}${c.type==="rt"?`&rdate=${c.d2}`:""}&class=${CAB_TRIP[c.cabin]}&quantity=${c.pax}&curr=JPY&locale=ja-JP`};
+}
+function update(){
+  const c=current();
+  const from=c.type==="mc"?c.segs[0].o:c.o, to=c.type==="mc"?c.segs[c.segs.length-1].d:c.d;
+  $("vO").textContent=valid(from)?from:"———"; $("vD").textContent=valid(to)?to:"———";
+  $("cO").textContent=city(from); $("cD").textContent=city(to);
+  const err=check(c); $("err").hidden=!err; $("err").textContent=err;
+  ["goSky","goTrip"].forEach(id=>$(id).setAttribute("aria-disabled",!!err));
+  if(!err){ const u=urls(c); $("goSky").href=u.sky; $("goTrip").href=u.trip; }
+}
+const WKEY="armstrong-watch";
+function loadW(){ try{return JSON.parse(localStorage.getItem(WKEY))||[];}catch{return [];} }
+function saveW(a){ try{localStorage.setItem(WKEY,JSON.stringify(a));}catch{} }
+const label=c=>c.type==="mc"?c.segs.map(s=>s.o).concat(c.segs[c.segs.length-1].d).join(" → "):`${c.o} ${c.type==="rt"?"⇄":"→"} ${c.d}`;
+const dates=c=>c.type==="mc"?c.segs.map(s=>md(s.date)).join("・"):md(c.d1)+(c.type==="rt"?"〜"+md(c.d2):"");
+function renderW(){
+  const a=loadW();
+  if(!a.length){ $("wl").innerHTML=`<li class="empty">まだありません。よく見るルートを保存しておくと、ここからすぐ検索できます。</li>`; return; }
+  $("wl").innerHTML=a.map((c,i)=>{ const u=urls(c); return `<li><div><div class="r code">${esc(label(c))}</div><div class="empty">${{ow:"片道",rt:"往復",mc:"周遊"}[c.type]}｜${dates(c)}｜${esc(c.pax)}名</div></div>
+    <div class="acts"><a href="${u.sky}" target="_blank" rel="noopener">スカイスキャナー</a><a href="${u.trip}" target="_blank" rel="noopener">Trip.com</a><button class="linkbtn" data-rm="${i}">削除</button></div></li>`; }).join("");
+}
+$("wl").addEventListener("click",e=>{ const i=e.target.dataset.rm; if(i==null) return; const a=loadW(); a.splice(+i,1); saveW(a); renderW(); });
+$("save").addEventListener("click",()=>{
+  const c=current(); const err=check(c); if(err){ $("err").hidden=false; $("err").textContent=err; return; }
+  const a=loadW(); a.unshift(c); saveW(a.slice(0,20)); renderW();
+  $("save").textContent="保存しました"; setTimeout(()=>$("save").textContent="この条件をウォッチリストに保存",1500);
+});
+
+/* ================= chat ================= */
+const SYSTEM=`あなたは株式会社FLYYOU（神戸の登録支援機関。主にネパール人の特定技能人材を受け入れ支援）のAI社員「アームストロング」、航空券・旅行プラン担当です。黒人男性、身長193cm・体重102kg、筋骨隆々。アゼルバイジャン国旗のタンクトップにミリタリーパンツ。プロテインが大好物。
+話し方：
+- 毎回の返答は、毎回違う英語スラングの挨拶で始める（例：Yo, what's up my boy? / What up! / Wassup fam! / Ayy, what's good? / Yo yo yo, my dawg! / Sup, bro! など。同じものを続けない）。
+- 基本は英語で、くだけたスラング交じりで話す（例：aight, no cap, let's gooo, I got you）。日本語も完全に理解できる。
+- ユーザーが日本語で書いた場合や、日付・空港・注意事項など重要な情報は、最後に「要点（日本語）」として短く日本語でまとめ、誤解が起きないようにする。
+- ノリは明るくても、情報は正確に、結論から。差別的・攻撃的な表現は使わない。
+役割：ネパール・ミャンマー・インドネシア・中国など⇄日本（西日本は関西空港KIX、関東は成田NRT／羽田HND、沖縄は那覇OKA）の格安航空券の探し方・ルート・時期の提案、入国時の迎えの段取り、旅行プラン作り。
+ルール：
+- リアルタイムの運賃や空席を取得できません。具体的な金額・便名・時刻を断定せず、「目安」「サイトで要確認」と明示する。架空の価格を作らない。
+- 在留資格を持たないネパール人の来日は、通し航空券・同一航空会社（同一予約）を優先し、通過ビザが不要になりやすいルート（例：バンコク経由・タイ国際航空）を基本に提案。ビザ・入国要件は航空会社と各国大使館の公式情報で確認するよう必ず添える。
+- FLYYOU社員が日本から行く場合は所要時間より最安値優先。ネパール人同行者がいるなら、その人が通れるルートに合わせる。
+- 周遊・経由（バングラデシュ、フィリピン、韓国、中国など）の安い組み方、寄り道先の観光と日数、1日ごとの日程表もユーモアを交えて提案してよい。ツアー料金や催行状況は断定しない。
+- 個人名、旅券番号などの個人情報は求めない・繰り返さない。
+- 検索条件が決まったら fill_search_form ツールで画面の検索フォームに入力する（IATA3文字コード、日付はYYYY-MM-DD）。日付が不明なら入れずに聞く。
+- 行き先と日付（候補日）が分かったら show_flight_options ツールで、日付ごとの「便の目安」と検索リンクを画面に出す。目安として出してよいのは、そのルートでよく使われる航空会社・経由地・所要時間・到着時間帯の傾向（あなたの一般知識）だけ。便名・時刻・価格・空席は書かない（運航スケジュールは変わるため）。ツールを使ったら、本文でも「この日は〇〇航空のバンコク経由あたりが候補、実際の便はリンクで確認」のように会話する。
+- あなたはネット検索・リアルタイムの情報取得ができない。「調べた」「今見たら」とは言わない。
+- 予約・支払いは行わない。
+直近の出張（社内予定）：
+- ネパール出張 1月16日〜1月22日。1月22日にネパール出発、1月23日に関西空港着、そこから社用車で米子へ移動。
+- 現地で入れたいもの：チトワン（FLYYOUの事務所があるため必須）、カトマンズに2日程度、ヌワコット、エベレスト遊覧飛行（マウンテンフライト）。
+- 未確定：1月16日が関空出発日かネパール到着日か、人数、ネパール人スタッフ同行の有無。プランを作るときは仮定を明示して確認を促す。`;
+const history=[];
+sampleReady.then(s=>{ if(!s) $("askNote").textContent="この表示では相談チャットと入国プラン作成を使えません。航空券検索はそのまま使えます。"; });
+const tools=[{
+  name:"fill_search_form",
+  description:"画面の航空券検索フォームに条件を入力する",
+  inputSchema:{type:"object",properties:{
+    trip_type:{type:"string",enum:["ow","rt","mc"],description:"片道ow／往復rt／周遊mc"},
+    origin:{type:"string"},destination:{type:"string"},depart_date:{type:"string"},return_date:{type:"string"},passengers:{type:"integer"},
+    segments:{type:"array",items:{type:"object",properties:{origin:{type:"string"},destination:{type:"string"},date:{type:"string"}}}}
+  },required:["trip_type"]},
+  execute(i){
+    if(i.passengers) $("pax").value=String(Math.min(9,Math.max(1,i.passengers)));
+    if(i.trip_type==="mc"&&Array.isArray(i.segments)&&i.segments.length>=2){
+      segs=i.segments.slice(0,4).map(s=>({o:code(s.origin),d:code(s.destination),date:s.date||""})); setType("mc");
+    } else {
+      setType(i.trip_type==="mc"?"rt":i.trip_type);
+      if(i.origin) $("o").value=code(i.origin);
+      if(i.destination) $("d").value=code(i.destination);
+      if(i.depart_date) $("d1").value=i.depart_date;
+      if(i.return_date) $("d2").value=i.return_date;
+      update();
+    }
+    const err=check(current());
+    return err?{ok:false,problem:err}:{ok:true,note:"フォームに入力しました"};
+  }
+},{
+  name:"show_flight_options",
+  description:"日付ごとの便の目安（よく使われる航空会社・経由地の傾向。便名・時刻・価格は入れない）と、その日付の航空券検索リンクを画面に表示する",
+  inputSchema:{type:"object",properties:{
+    origin:{type:"string",description:"出発IATA3文字"},destination:{type:"string",description:"到着IATA3文字"},
+    passengers:{type:"integer"},
+    days:{type:"array",description:"候補日（最大7日）",items:{type:"object",properties:{
+      date:{type:"string",description:"YYYY-MM-DD"},
+      options:{type:"array",items:{type:"object",properties:{airline:{type:"string"},via:{type:"string",description:"経由地。直行ならdirect"},typical:{type:"string",description:"所要時間・到着時間帯などの傾向（目安）"}}}},
+      note:{type:"string"}}}}
+  },required:["origin","destination","days"]},
+  execute(i){
+    const o=code(i.origin), d=code(i.destination);
+    if(!valid(o)||!valid(d)) return {ok:false,problem:"IATA3文字コードで指定してください"};
+    const pax=Math.min(9,Math.max(1,+i.passengers||1));
+    const days=(Array.isArray(i.days)?i.days:[]).filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x?.date||"")).slice(0,7);
+    if(!days.length) return {ok:false,problem:"日付をYYYY-MM-DDで指定してください"};
+    const card=document.createElement("div"); card.className="fcard";
+    card.innerHTML=`<div class="ft">✈️ <span class="code" style="font-size:18px">${esc(o)} → ${esc(d)}</span>　${esc(city(o))} → ${esc(city(d))}（${pax}名）</div>
+      ${days.map(x=>{ const u=oneWay(o,d,x.date,pax); const opts=(Array.isArray(x.options)?x.options:[]).slice(0,4);
+        return `<div class="frow"><div style="min-width:0;flex:1 1 220px"><b class="code" style="font-size:17px">${md(x.date)}</b>（${wd(x.date)}）
+          ${opts.map(p=>`<div>・${esc(p.airline||"")}${p.via?`／${p.via==="direct"?"直行":"経由："+esc(p.via)}`:""}${p.typical?`<span class="empty">（${esc(p.typical)}）</span>`:""}</div>`).join("")}
+          ${x.note?`<div class="empty">${esc(x.note)}</div>`:""}</div>
+          <div><a href="${u.sky}" target="_blank" rel="noopener">スカイスキャナー</a><a href="${u.trip}" target="_blank" rel="noopener">Trip.com</a></div></div>`; }).join("")}
+      <p class="hint" style="margin-top:6px">航空会社・経由地はアームストロングの一般知識による目安です（リアルタイム検索ではありません）。運航日・時刻・価格・通過ビザの要否はリンク先と航空会社の公式情報で確認してください。</p>`;
+    (curAiEl?.after ? curAiEl.after(card) : $("log").appendChild(card));
+    return {ok:true,note:"画面に便の目安と検索リンクを表示しました"};
+  }
+}];
+function add(role,text){ const el=document.createElement("div"); el.className="msg "+(role==="user"?"me":"ai"); el.textContent=text; $("log").appendChild(el); return el; }
+let busy=false, curAiEl=null, askLang="ja";
+const EN_MODE=`
+【Englishモード（英会話練習も兼ねる）】
+- 返答は英語だけで書く（「要点（日本語）」は付けない。ただし日付・空港コードは正確に）。初心者にも分かる、短めの文で。
+- ユーザーが英語で書いたら、返答の最後に必ず次の形で英語をチェックする：
+🗣️ English check
+You said: "（ユーザーの不自然・誤った部分）" → Better: "（自然な言い方）" — （短い理由を英語で）
+（直す所は最大2つ。完璧なら "🗣️ English check: Perfect, my boy! 💪" と一言ほめる）
+- ユーザーが日本語で書いたら、最後に "🗣️ Say it in English:" として、その内容の自然な英語を1文示す。
+- 旅行の相談は普通に進める（行き先・時期・人数・予算・目的を英語で質問して聞き出し、プランや便の目安を提案する）。`;
+function setAskLang(l){
+  askLang=l; document.querySelectorAll("#askLangRow button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.l===l));
+  $("q").placeholder = l==="en" ? "e.g. I want to go to Kathmandu in December. Can you find me a cheap flight from Osaka?" : "例：12月にカトマンズから関空に1名。同じ航空会社で、乗継ビザ不要のルートで一番安い組み方は？";
+}
+$("askLangRow").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) setAskLang(b.dataset.l); });
+async function askSend(text,hidden){
+  if(!text||busy) return;
+  await sampleReady;
+  if(!sampleFn){ add("ai","この表示では相談チャットを使えません。"); return; }
+  busy=true; $("send").disabled=true; $("enTripStart").disabled=true; office();
+  if(!hidden) add("user",text);
+  history.push({role:"user",content:text});
+  const el=add("ai",askLang==="en"?"Thinking…":"考えています…"); curAiEl=el;
+  try{
+    const sys=SYSTEM+(askLang==="en"?EN_MODE:"")+`\n今日の日付：${iso(today)}`;
+    const msgs=[{role:"user",content:sys+"\n\n--- 会話開始 ---\n"+history[0].content},...history.slice(1)];
+    const r=await sampleFn(msgs,{cache:false,tools,onText:({text})=>{ el.textContent=text; }});
+    el.textContent=r.text; history.push({role:"assistant",content:r.text});
+    speak(String(r.text).split(/🗣️/)[0]);
+  }catch(e){
+    history.pop();
+    el.textContent=e&&e.code==="rate_limited"?"混み合っています。少し待ってからもう一度送ってください。":e&&e.code==="not_granted"?"相談チャットの利用が許可されていません。検索フォームはそのまま使えます。":"回答を取得できませんでした。もう一度送ってください。";
+  }finally{ busy=false; $("send").disabled=false; $("enTripStart").disabled=false; }
+}
+$("send").addEventListener("click",()=>{ const t=$("q").value.trim(); if(!t) return; $("q").value=""; askSend(t,false); });
+$("enTripStart").addEventListener("click",()=>{
+  setAskLang("en"); location.hash="ask";
+  askSend("（ユーザーは英語で旅行の相談をしながら英会話を練習したい。あなたから英語で話しかけて会話を始める。挨拶して、どこへ・いつ・何人で・何をしに行きたいかを1〜2個だけ質問する。まだツールは使わない）",true);
+});
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null;
+$("mic").addEventListener("click",()=>{
+  if(!SR){ $("askNote").textContent="この端末・ブラウザでは音声入力を使えません。キーボードの音声入力をお使いください。"; return; }
+  if(rec){ rec.stop(); return; }
+  rec=new SR(); rec.lang=askLang==="en"?"en-US":"ja-JP"; rec.interimResults=true;
+  const base=$("q").value;
+  rec.onresult=e=>{ $("q").value=base+Array.from(e.results).map(r=>r[0].transcript).join(""); };
+  rec.onerror=()=>{ $("askNote").textContent="音声を取得できませんでした。マイクの許可を確認してください。"; };
+  rec.onend=()=>{ rec=null; $("mic").textContent="🎤 音声で入力"; $("mic").setAttribute("aria-pressed","false"); $("mic").className="btn ghost"; };
+  rec.start(); $("mic").textContent="■ 停止"; $("mic").setAttribute("aria-pressed","true"); $("mic").className="btn rec";
+});
+$("planBtn").addEventListener("click",()=>{
+  $("q").value="1月のネパール出張（1/16〜1/22、1/22出発・1/23関空着）の日程プランを作って。チトワン必須、カトマンズ2日、ヌワコット、エベレスト遊覧飛行を入れて。帰りの便の探し方も。";
+  location.hash="ask"; $("send").click();
+});
+
+/* ================= English training ================= */
+const SITS=[
+ {cat:"🍽️ 食事",items:[
+  {id:"restaurant",name:"🍽️ レストランで注文",sub:"席・注文・おすすめ・会計",role:"a friendly waiter at a casual American restaurant",goal:"席に案内してもらい、料理と飲み物を注文し、最後にお会計をする",open:"Hi there, welcome in! Just one tonight, or are you waiting for someone?"},
+  {id:"cafe",name:"☕ カフェ",sub:"サイズ・カスタム・持ち帰り",role:"a barista at a busy coffee shop",goal:"飲み物をサイズ・ミルクなど指定して注文し、店内か持ち帰りかを伝える",open:"Hey, what can I get started for you today?"},
+  {id:"dinner",name:"🍻 友達とごはん",sub:"何食べる？割り勘・感想",role:"a close friend having dinner together (Armstrong himself)",goal:"何を食べるか相談し、料理の感想を言い、会計を割り勘にする",open:"Yo, I'm starving, my boy! What you feelin' tonight? Ramen? Curry? Steak?"},
+  {id:"allergy",name:"🥜 アレルギー・苦手を伝える",sub:"食べられない物の説明",role:"a server at a restaurant",goal:"食べられない食材（例：えび、豚肉、辛い物）を伝え、大丈夫な料理を聞く",open:"Good evening! Are you ready to order, or do you need a few more minutes?"}]},
+ {cat:"✈️ 旅行",items:[
+  {id:"checkin",name:"🧳 空港チェックイン",sub:"荷物・座席・搭乗口",role:"an airline check-in agent",goal:"パスポートを出し、荷物を預け、通路側の席を頼み、搭乗口と時間を確認する",open:"Good morning! Where are you flying to today? Can I see your passport, please?"},
+  {id:"immigration",name:"🛂 入国審査",sub:"目的・滞在日数・宿泊先",role:"a strict but fair immigration officer",goal:"渡航目的・滞在日数・滞在先・職業を落ち着いて答える",open:"Next, please. Passport. What's the purpose of your visit?"},
+  {id:"plane",name:"🛫 機内",sub:"飲み物・毛布・席の交換",role:"a flight attendant",goal:"飲み物を頼み、毛布をもらい、困ったことを伝える",open:"Hi! Would you like something to drink? We have juice, water, coffee, tea and soft drinks."},
+  {id:"hotel",name:"🏨 ホテルのチェックイン",sub:"予約確認・朝食・Wi-Fi",role:"a hotel front desk clerk",goal:"予約名を伝えてチェックインし、朝食の時間とWi-Fi、チェックアウト時間を確認する",open:"Good evening, welcome! Checking in? May I have the name on the reservation?"},
+  {id:"direction",name:"🗺️ 道を聞く",sub:"駅・行き方・所要時間",role:"a local person on the street",goal:"駅や観光地への行き方と、歩いて何分かを聞き、お礼を言う",open:"(You stop a local on the street.) Oh, hey. You look a little lost. Need some help?"},
+  {id:"taxi",name:"🚕 タクシー・Uber",sub:"行き先・料金・急いでる",role:"a taxi driver",goal:"行き先を伝え、だいたいの料金と時間を聞き、降りる場所を指示する",open:"Hey, where to?"},
+  {id:"lost",name:"😱 ロストバゲージ・トラブル",sub:"荷物が出てこない・遅延",role:"an airline baggage service agent",goal:"荷物が出てこないことを説明し、荷物の特徴を伝え、届け先と連絡方法を確認する",open:"Hi, how can I help you? Is there a problem with your baggage?"},
+  {id:"shop",name:"🛍️ 買い物",sub:"サイズ・試着・値段交渉",role:"a shop clerk at a clothing store (open to small bargaining at a market)",goal:"欲しい物を探し、サイズを聞き、試着して、値段を確認して買う",open:"Hi! Looking for anything in particular today?"}]},
+ {cat:"🎉 遊び・友達",items:[
+  {id:"weekend",name:"🎮 週末の予定を立てる",sub:"誘う・断る・時間を決める",role:"a friend (Armstrong himself) making weekend plans",goal:"友達を遊びに誘い、何をするか・いつ・どこで会うかを決める",open:"Ayy, what's good! You got any plans this weekend, fam?"},
+  {id:"club",name:"🪩 クラブ・バー",sub:"注文・音楽・会話・帰る",role:"a friendly local at a club/bar (Armstrong is your hype man). Keep it fun and safe: no drugs, drink responsibly.",goal:"ドリンクを頼み、隣の人と音楽や出身の話をして、最後にうまく切り上げる",open:"(Loud music) YO! First time here? This DJ is fire tonight! What you drinkin'?"},
+  {id:"party",name:"🎉 パーティーで初対面",sub:"自己紹介・仕事・趣味",role:"a guest you just met at a house party",goal:"自己紹介をして、仕事・出身・趣味の話を広げ、連絡先を交換する",open:"Hey! I don't think we've met. I'm Chris. How do you know the host?"},
+  {id:"gym",name:"💪 ジムで",sub:"マシンを譲る・フォームを聞く",role:"Armstrong himself as your gym buddy",goal:"マシンが空いているか聞き、トレーニングのコツを教えてもらい、次の約束をする",open:"Yo! You done with that bench, or you got more sets? ...Wait, you new here?"},
+  {id:"date",name:"💘 デート",sub:"誘う・褒める・次の約束",role:"a date you met through friends (keep it polite and wholesome)",goal:"相手を褒め、好きな食べ物や趣味の話をして、次のデートに誘う",open:"Hi! Sorry I'm a little late. Wow, this place looks nice. Have you been here before?"}]},
+ {cat:"💼 仕事・生活",items:[
+  {id:"intro",name:"💼 職場で自己紹介",sub:"名前・担当・よろしく",role:"a new coworker on your first day at an international company",goal:"名前・出身・担当業務を自己紹介し、相手のことも質問する",open:"Hi, you must be the new person! Welcome to the team. Tell me a little about yourself!"},
+  {id:"phone",name:"📞 電話で予約",sub:"日時・人数・名前のつづり",role:"a restaurant staff member answering the phone",goal:"日時と人数を伝えて予約し、名前のつづりを伝える",open:"Thank you for calling Sunset Grill, this is Mia speaking. How can I help you?"},
+  {id:"clinic",name:"🏥 病院・薬局",sub:"症状の説明・薬",role:"a pharmacist at a drugstore",goal:"症状（頭痛・熱・腹痛など）を説明して、合う薬と飲み方を聞く",open:"Hi there, what can I help you with today?"},
+  {id:"free",name:"💬 フリートーク",sub:"アームストロングと雑談",role:"Armstrong himself, chatting casually about anything",goal:"今日あったこと・好きなこと・夢などを自由に話す",open:"Yo yo yo, my dawg! Pull up a chair. How was your day, for real?"}]}
+];
+const ALL_SITS=SITS.flatMap(c=>c.items);
+const ELV=[
+  {id:"easy",name:"初級",desc:"ゆっくり・簡単な単語。日本語訳つき。ヒント多め",rule:"Use very simple words and short sentences (A1-A2). Ask one easy question at a time."},
+  {id:"mid",name:"中級",desc:"ふつうの会話。訳は必要なときだけ",rule:"Use natural everyday English (B1). Normal length sentences."},
+  {id:"hard",name:"上級",desc:"ネイティブの速さ・スラング・言い回し多め",rule:"Speak like a native (B2-C1): idioms, phrasal verbs, some slang where natural, follow-up questions and small surprises."}
+];
+const EFX=[
+  {id:"all",name:"毎回しっかり直す",rule:"Correct every grammar mistake, unnatural phrase, or wrong word."},
+  {id:"major",name:"大事なミスだけ",rule:"Only correct mistakes that would confuse a native speaker or sound rude. Ignore tiny ones."}
+];
+const ES={sit:null,lv:"easy",fx:"all",turns:[],fixes:[],busy:false,ctl:null,showJa:true};
+const EKEY="armstrong-eng-hist";
+const ehist={get(){try{return JSON.parse(localStorage.getItem(EKEY))||[]}catch{return []}},set(a){try{localStorage.setItem(EKEY,JSON.stringify(a.slice(-30)))}catch{}}};
+function renderESetup(){
+  $("sitWrap").innerHTML=SITS.map(c=>`<p class="catlabel">${esc(c.cat)}</p><div class="sitgrid">${c.items.map(s=>`<button class="sit" data-s="${s.id}" aria-pressed="${ES.sit===s.id}"><b>${esc(s.name)}</b><span>${esc(s.sub)}</span></button>`).join("")}</div>`).join("");
+  $("lvRow").innerHTML=ELV.map(l=>`<button data-lv="${l.id}" title="${esc(l.desc)}" aria-pressed="${ES.lv===l.id}">${esc(l.name)}</button>`).join("");
+  $("fxRow").innerHTML=EFX.map(f=>`<button data-fx="${f.id}" aria-pressed="${ES.fx===f.id}">${esc(f.name)}</button>`).join("");
+  const s=ALL_SITS.find(x=>x.id===ES.sit), l=ELV.find(x=>x.id===ES.lv);
+  $("eStart").disabled=!s;
+  $("eStartNote").textContent=s?`${s.name}／${l.name}：${l.desc}`:"場面を選んでください。";
+  const h=ehist.get(); $("eHistWrap").hidden=!h.length;
+  $("eHist").innerHTML=h.slice(-8).reverse().map(r=>`<div><span>${esc(r.date)}　${esc(r.sit)}／${esc(r.lv)}</span><b>${r.score!=null?esc(r.score)+"点":"—"}</b></div>`).join("");
+}
+$("eSetup").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.s){ ES.sit=b.dataset.s; renderESetup(); const s=ALL_SITS.find(x=>x.id===ES.sit); say(`Aight, ${s.name.replace(/^\S+\s/,"")}? Bet. I got you, my boy!`); }
+  if(b.dataset.lv){ ES.lv=b.dataset.lv; ES.showJa=ES.lv==="easy"; renderESetup(); }
+  if(b.dataset.fx){ ES.fx=b.dataset.fx; renderESetup(); }
+});
+function eView(v){ ["eSetup","eRoom","eReport"].forEach(id=>$(id).hidden=id!==v); if(v==="eSetup") renderESetup(); document.getElementById("eng").scrollIntoView({block:"start"}); }
+function eSetJa(){ $("eJa").textContent=ES.showJa?"日本語訳を隠す":"日本語訳を表示"; $("eJa").setAttribute("aria-pressed",ES.showJa); document.querySelectorAll("#eLog .ja").forEach(x=>x.hidden=!ES.showJa); }
+function eScroll(){ const l=$("eLog"); l.scrollTop=l.scrollHeight; }
+function eArm(text,ja,sugg){
+  const s=ALL_SITS.find(x=>x.id===ES.sit);
+  const w=document.createElement("div"); w.className="eb arm";
+  w.innerHTML=`<span class="who">💪 アームストロング（${esc(s.role.split(/[(.]/)[0].trim())}役）</span><div class="tx"></div><p class="ja"></p><div class="mini"><button class="linkbtn" data-say>🔊 もう一回聞く</button></div>`;
+  w.querySelector(".tx").textContent=text; const jp=w.querySelector(".ja"); jp.textContent=ja||""; jp.hidden=!ES.showJa||!ja;
+  w.querySelector("[data-say]").onclick=()=>speak(text,{pitch:.8,rate:ES.lv==="easy"?.82:.95});
+  $("eLog").appendChild(w);
+  if(Array.isArray(sugg)&&sugg.length){
+    const sg=document.createElement("div"); sg.className="sugg";
+    sg.innerHTML=`<span class="empty" style="font-size:11px;align-self:center">返し方の例：</span>`+sugg.slice(0,3).map(x=>`<button>${esc(x)}</button>`).join("");
+    sg.addEventListener("click",ev=>{ const bb=ev.target.closest("button"); if(bb){ $("eSay").value=bb.textContent; $("eSay").focus(); } });
+    $("eLog").appendChild(sg);
+  }
+  eScroll(); return w;
+}
+function eMe(text){ const w=document.createElement("div"); w.className="eb me"; w.innerHTML=`<span class="who">あなた</span><div class="tx"></div>`; w.querySelector(".tx").textContent=text; $("eLog").appendChild(w); eScroll(); return w; }
+function eFix(c){
+  const w=document.createElement("div");
+  if(!c||!c.needed){ w.className="fix ok"; w.innerHTML=`<span class="good"></span>`; w.querySelector(".good").textContent=(c&&c.praise)||"Clean! That's how you say it, my boy. 💪"; $("eLog").appendChild(w); eScroll(); return; }
+  w.className="fix";
+  w.innerHTML=`<span style="font-size:12px;font-weight:700;color:var(--crimson)">🛑 Armstrong's fix</span>
+    <span class="bad"></span><span class="good"></span><span class="why"></span><span class="wja"></span>
+    <div class="mini"><button class="linkbtn" data-say>🔊 正しい言い方を聞く</button><button class="linkbtn" data-use>この言い方で言い直す</button></div>`;
+  w.querySelector(".bad").textContent=c.you_said?`You: "${c.you_said}"`:"";
+  w.querySelector(".good").textContent=`✅ "${c.better}"`;
+  w.querySelector(".why").textContent=c.why_en||"";
+  w.querySelector(".wja").textContent=c.why_ja||"";
+  w.querySelector("[data-say]").onclick=()=>speak(`${c.why_en_short||"Say it like this."} ${c.better}`,{pitch:.8,rate:.9});
+  w.querySelector("[data-use]").onclick=()=>{ $("eSay").value=c.better; $("eSay").focus(); };
+  $("eLog").appendChild(w); eScroll();
+}
+function eSetBusy(v){ ES.busy=v; ["eSend","eHelp","eEnd"].forEach(id=>$(id).disabled=v); $("eStop").hidden=!v; }
+function eErr(e){ const c=e&&e.code; if(c==="cancelled") return "止めました。"; if(c==="rate_limited") return "混み合っています。少し待ってから送ってください。"; if(c==="not_granted") return "アームストロングとの会話が許可されていません。画面の許可設定を確認してください。"; return "返事を受け取れませんでした。もう一度送ってください。"; }
+function eTranscript(){ return ES.turns.map(t=>(t.r==="a"?"Armstrong: ":"Learner: ")+t.t).join("\n"); }
+function eBase(){
+  const s=ALL_SITS.find(x=>x.id===ES.sit), l=ELV.find(x=>x.id===ES.lv), f=EFX.find(x=>x.id===ES.fx);
+  return `You are "Armstrong", an AI staff member of FLYYOU (a Japanese company). He is a big, muscular, cheerful Black man who loves the gym and protein and talks with friendly American slang ("my boy", "aight", "no cap", "let's gooo"). He is now an English conversation coach for a Japanese learner.
+
+# Role-play
+- Situation: ${s.name}（${s.sub}）
+- You play: ${s.role}. Stay in that role in "reply". Use the tone that fits the role (an immigration officer is formal; a friend at a club is casual). Armstrong's own slang personality shows mainly in the coaching parts (correction "why_en", praise).
+- The learner's mission: ${s.goal}
+- Level: ${l.name}. ${l.rule}
+- Correction policy: ${f.rule}
+- Keep each "reply" to 1-3 short sentences and usually end with a question or something the learner must respond to, moving the scene forward toward the mission. Do not invent personal data about the learner.
+- If the learner writes in Japanese (or mixes Japanese), treat it as "I don't know how to say this": in "correction" put their Japanese in you_said and the natural English in better, then continue the scene as if they said it.
+- If the learner's English is natural and correct, needed=false and give a short praise in Armstrong style.
+- Corrections: "better" must be a complete natural sentence the learner could say in this exact moment. "why_en": 1-2 short sentences in simple English, Armstrong style, starting like "Nah, my boy—" / "Close!" / "Almost, fam—". "why_ja": the same explanation in natural Japanese (short). "why_en_short": max 8 words to read aloud before the correct sentence.
+- Keep everything respectful and safe (no drugs, no sexual content, no discrimination).`;
+}
+async function eTurn(userText){
+  await sampleReady;
+  if(!sampleFn){ $("eNote").textContent="この表示ではアームストロングと会話できません。claude.ai にサインインして開いてください。"; return; }
+  eSetBusy(true); office();
+  const typing=document.createElement("div"); typing.className="eb arm"; typing.innerHTML=`<div class="tx">…</div>`; $("eLog").appendChild(typing); eScroll();
+  ES.ctl=new AbortController();
+  const prompt=`${eBase()}
+
+# Conversation so far
+${eTranscript()}
+
+# The learner just said
+"${userText}"
+
+Return ONLY this JSON:
+{"correction":{"needed":true|false,"you_said":"the wrong/unnatural part (or the Japanese)","better":"natural sentence","why_en":"...","why_ja":"...","why_en_short":"...","praise":"(only when needed=false) short praise"},
+"reply":"your next line in role (English)","reply_ja":"Japanese translation of reply","suggest":["2 example answers the learner could say next, at their level"],"mission_done":true|false}`;
+  try{
+    const j=await sampleFn.json(prompt,{modelTier:"default",signal:ES.ctl.signal});
+    typing.remove();
+    const c=j&&j.correction;
+    eFix(c);
+    if(c&&c.needed&&c.better) ES.fixes.push({you:c.you_said||userText,better:c.better,why:c.why_ja||c.why_en||""});
+    ES.turns.push({r:"l",t:userText});
+    const reply=String(j?.reply||"").trim()||"…";
+    ES.turns.push({r:"a",t:reply});
+    eArm(reply,j?.reply_ja,j?.suggest);
+    const fixSpeech = c&&c.needed&&c.better ? `${c.why_en_short||"Say it like this."} ${c.better}. ... ` : "";
+    speak(fixSpeech+reply,{pitch:.8,rate:ES.lv==="easy"?.82:.95});
+    if(j?.mission_done) $("eNote").textContent="🎯 ミッション達成！続けてもOK。「終わって講評へ」で採点できます。";
+    else $("eNote").textContent="Ctrl+Enter（Macは⌘+Enter）でも送信できます。";
+  }catch(e){
+    typing.remove();
+    const ms=$("eLog").querySelectorAll(".eb.me"); ms[ms.length-1]?.remove(); $("eSay").value=userText;
+    $("eNote").textContent=eErr(e);
+  }finally{ eSetBusy(false); }
+}
+async function eStartRun(){
+  const s=ALL_SITS.find(x=>x.id===ES.sit); if(!s) return;
+  ES.turns=[{r:"a",t:s.open}]; ES.fixes=[]; ES.showJa=ES.lv==="easy";
+  $("eLog").innerHTML=""; $("eSay").value="";
+  $("eMission").innerHTML=`<div class="ttl">${esc(s.name)}｜${esc(ELV.find(x=>x.id===ES.lv).name)}</div><div>🎯 ミッション：${esc(s.goal)}</div><div class="empty">アームストロングの役：${esc(s.role.split(/[(.]/)[0].trim())}</div>`;
+  eView("eRoom"); eSetJa();
+  const jaOpen=await (async()=>{ if(!sampleFn) return ""; try{ return (await sampleFn(`Translate into natural Japanese. Output only the translation:\n${s.open}`,{modelTier:"quick"})).text.trim(); }catch{ return ""; } })();
+  eArm(s.open,jaOpen,[]);
+  speak(s.open,{pitch:.8,rate:ES.lv==="easy"?.82:.95});
+  $("eSay").focus();
+}
+$("eStart").addEventListener("click",async()=>{ await sampleReady; eStartRun(); });
+$("eSend").addEventListener("click",()=>{ const t=$("eSay").value.trim(); if(!t||ES.busy) return; $("eSay").value=""; eMe(t); eTurn(t); });
+$("eSay").addEventListener("keydown",e=>{ if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); $("eSend").click(); } });
+$("eJa").addEventListener("click",()=>{ ES.showJa=!ES.showJa; eSetJa(); });
+$("eStop").addEventListener("click",()=>ES.ctl?.abort());
+$("eBack").addEventListener("click",()=>{ ES.ctl?.abort(); try{speechSynthesis.cancel()}catch{}; eView("eSetup"); });
+$("eHelp").addEventListener("click",async()=>{
+  if(ES.busy) return; await sampleReady; if(!sampleFn) return;
+  eSetBusy(true);
+  const card=document.createElement("div"); card.className="helpcard"; card.textContent="Armstrong is thinking… 💭"; $("eLog").appendChild(card); eScroll();
+  ES.ctl=new AbortController();
+  try{
+    const j=await sampleFn.json(`${eBase()}
+
+# Conversation so far
+${eTranscript()}
+
+The learner is stuck and doesn't know how to answer your last line. Coach them.
+Return ONLY JSON:
+{"intro":"Armstrong-style short line in English, like 'No worries, my boy. When they ask that, you say:'","answer":"the best natural answer for this moment (at their level)","answer_ja":"Japanese translation","alt":"one more way to say it","point_ja":"使い方のポイントを日本語で1〜2文"}`,{modelTier:"default",signal:ES.ctl.signal});
+    card.innerHTML=`<span style="font-size:12px;font-weight:700;color:var(--blue)">🆘 Armstrong's answer</span><span class="i"></span><b class="a" style="font-size:15px"></b><span class="aj empty"></span><span class="al"></span><span class="p empty"></span>
+      <div class="mini" style="display:flex;gap:10px"><button class="linkbtn" data-say>🔊 聞く</button><button class="linkbtn" data-use>これで言ってみる</button></div>`;
+    card.querySelector(".i").textContent=j.intro||"When that happens, you say:";
+    card.querySelector(".a").textContent=`"${j.answer||""}"`;
+    card.querySelector(".aj").textContent=j.answer_ja||"";
+    card.querySelector(".al").textContent=j.alt?`Or: "${j.alt}"`:"";
+    card.querySelector(".p").textContent=j.point_ja||"";
+    card.querySelector("[data-say]").onclick=()=>speak(`${j.intro||""} ${j.answer||""}`,{pitch:.8,rate:.88});
+    card.querySelector("[data-use]").onclick=()=>{ $("eSay").value=j.answer||""; $("eSay").focus(); };
+    speak(`${j.intro||""} ${j.answer||""}`,{pitch:.8,rate:.88});
+    eScroll();
+  }catch(e){ card.textContent=eErr(e); }
+  finally{ eSetBusy(false); }
+});
+$("eEnd").addEventListener("click",async()=>{
+  if(ES.busy) return;
+  if(!ES.turns.some(t=>t.r==="l")){ $("eNote").textContent="講評するには、少なくとも1回は返事をしてください。"; return; }
+  try{speechSynthesis.cancel()}catch{}
+  const s=ALL_SITS.find(x=>x.id===ES.sit), l=ELV.find(x=>x.id===ES.lv);
+  eView("eReport"); const r=$("eReport");
+  r.innerHTML=`<h3 style="margin-top:0">講評を作っています…</h3><p class="empty">アームストロングが会話を振り返っています。30秒ほどかかることがあります。</p>`;
+  try{
+    if(!sampleFn) throw {code:"unavailable"};
+    const j=await sampleFn.json(`${eBase()}
+
+# Full conversation
+${eTranscript()}
+
+# Corrections already given during the chat
+${ES.fixes.map(f=>`- "${f.you}" → "${f.better}"`).join("\n")||"(none)"}
+
+Now step out of the role and give a final review as Coach Armstrong. Return ONLY JSON:
+{"score":0-100 integer,"mission":"achieved"|"partly"|"not yet","armstrong_en":"2-3 sentence hype review in Armstrong style English","summary_ja":"総評（日本語2〜3文）",
+"scores":{"文法":0-100,"自然さ":0-100,"語彙":0-100,"会話を進める力":0-100},
+"good":[{"quote":"learner's good line","why_ja":"良かった理由"}],
+"fixes":[{"you":"learner's line","better":"natural version","why_ja":"短い理由"}],
+"phrases":[{"en":"useful phrase for this situation","ja":"意味"}],
+"next_ja":"次回の練習で意識すること（1〜2文）"}
+fixes: the most important up to 6. phrases: 5 useful phrases for this situation.`,{modelTier:"default"});
+    const sc=Number.isFinite(+j.score)?Math.max(0,Math.min(100,+j.score)):null;
+    const mis={achieved:"🎯 ミッション達成",partly:"🟡 ミッション一部達成","not yet":"⏳ ミッション未達成"}[j.mission]||"";
+    r.innerHTML=`<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <div class="score">${sc??"—"}<small> / 100</small></div>
+        <div style="flex:1 1 240px;min-width:0"><div class="empty">${esc(s.name)}｜${esc(l.name)}｜${esc(mis)}</div><p style="margin:2px 0 0" class="arm-en"></p><p class="empty" style="margin:2px 0 0" id="eSumJa"></p></div></div>
+      <div class="rlist">${Object.entries(j.scores||{}).map(([k,v])=>{ const n=Math.max(0,Math.min(100,+v||0)); return `<div style="display:grid;grid-template-columns:8em 1fr 2.5em;gap:8px;align-items:center;font-size:13px"><span>${esc(k)}</span><span style="height:8px;background:var(--blue-soft);border-radius:9px;overflow:hidden"><span style="display:block;height:100%;width:${n}%;background:var(--crimson)"></span></span><span class="code" style="text-align:right">${n}</span></div>`; }).join("")}</div>
+      <h3>🛑 直したほうがいい英語</h3><div class="rlist">${(j.fixes||[]).map(f=>`<div class="fix"><span class="bad">You: "${esc(f.you)}"</span><span class="good">✅ "${esc(f.better)}"</span><span class="wja">${esc(f.why_ja)}</span></div>`).join("")||`<p class="empty">大きなミスはありませんでした。</p>`}</div>
+      <h3>👍 良かったところ</h3><div class="rlist">${(j.good||[]).map(g=>`<div class="fix ok"><span class="good">"${esc(g.quote)}"</span><span class="wja">${esc(g.why_ja)}</span></div>`).join("")||`<p class="empty">—</p>`}</div>
+      <h3>📒 この場面で使えるフレーズ</h3><div class="rlist">${(j.phrases||[]).map((p,i)=>`<div class="post" style="margin:0"><p class="en">${esc(p.en)}</p><p class="pja">${esc(p.ja)}</p><div class="acts"><button class="sp" data-ph="${i}">🔊 聞く</button></div></div>`).join("")}</div>
+      <h3>次回の練習で意識すること</h3><p style="margin:0">${esc(j.next_ja||"")}</p>
+      <div class="btnrow" style="margin-top:14px"><button class="btn primary grow" id="eAgain">同じ場面でもう一回</button><button class="btn ghost" id="eChange">場面を変える</button><button class="btn ghost" id="eReview">会話を見直す</button></div>
+      <p class="hint">講評はAIによる目安です。採点は会話の内容から自動で出しています。</p>`;
+    r.querySelector(".arm-en").textContent=j.armstrong_en||""; $("eSumJa").textContent=j.summary_ja||"";
+    r.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>speak(j.phrases[+b.dataset.ph].en,{pitch:.8,rate:.88}));
+    happy(`${j.armstrong_en||"Good work, my boy!"}`.slice(0,140),sc!=null?`${sc} PTS 💪`:"GOOD JOB!");
+    const h=ehist.get(), d=new Date();
+    h.push({date:`${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`,sit:s.name,lv:l.name,score:sc}); ehist.set(h);
+  }catch(e){
+    r.innerHTML=`<h3 style="margin-top:0">講評を作れませんでした</h3><p class="empty"></p><div class="btnrow"><button class="btn primary" id="eRetry">もう一度講評する</button><button class="btn ghost" id="eReview">会話に戻る</button></div>`;
+    r.querySelector("p").textContent=eErr(e);
+    $("eRetry").onclick=()=>$("eEnd").click();
+  }
+  const a=$("eAgain"); if(a) a.onclick=eStartRun;
+  const c=$("eChange"); if(c) c.onclick=()=>eView("eSetup");
+  const rv=$("eReview"); if(rv) rv.onclick=()=>eView("eRoom");
+});
+let eRec=null;
+$("eMic").addEventListener("click",()=>{
+  if(!SR){ $("eNote").textContent="この端末・ブラウザでは音声入力を使えません。キーボードの音声入力（英語）をお使いください。"; return; }
+  if(eRec){ eRec.stop(); return; }
+  try{speechSynthesis.cancel()}catch{}
+  eRec=new SR(); eRec.lang="en-US"; eRec.interimResults=true;
+  const base=$("eSay").value?$("eSay").value+" ":"";
+  eRec.onresult=e=>{ $("eSay").value=base+Array.from(e.results).map(r=>r[0].transcript).join(""); };
+  eRec.onerror=()=>{ $("eNote").textContent="音声を取得できませんでした。マイクの許可を確認してください。"; };
+  eRec.onend=()=>{ eRec=null; $("eMic").textContent="🎤 英語で話す"; $("eMic").setAttribute("aria-pressed","false"); $("eMic").className="btn ghost"; };
+  eRec.start(); $("eMic").textContent="■ 停止"; $("eMic").setAttribute("aria-pressed","true"); $("eMic").className="btn rec";
+});
+renderESetup();
+update(); renderW();
+</script>
+</body>
+</html>
