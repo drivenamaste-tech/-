@@ -76,6 +76,7 @@ h3{font-size:15px;margin:16px 0 6px}
 .job small{display:block;font-size:11px;color:var(--muted);line-height:1.4}
 .job.main{grid-column:1/-1;background:var(--blue);border-color:var(--blue);color:#fff}
 .job.main small{color:rgba(255,255,255,.85)}
+#pickFree small{color:color-mix(in srgb,var(--paper) 85%,transparent)}
 .role{display:inline-block;background:var(--crimson);color:#fff;border-radius:6px;padding:0 8px;margin-right:6px;font-weight:700;font-size:12px}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .zz{animation:zz 3s infinite;fill:var(--muted)}
@@ -259,9 +260,10 @@ label.f input,label.f select,label.f textarea{display:block;width:100%;margin-to
   <!-- talk: English training + travel consultation -->
   <h2 id="talk">🗣️ アームストロングと話す</h2>
   <section class="panel" id="talkPick">
-    <p style="margin:0 0 10px;font-size:14px">どっちにする？ 押すとアームストロングが話しかけてきて、会話の中で場面や難易度を聞いてくれます。</p>
+    <p style="margin:0 0 10px;font-size:14px">どれにする？ 押すとアームストロングのほうから話しかけてきます。英会話は、場面や難易度も会話の中で聞いてくれます。</p>
     <div class="work">
       <button class="job main pick" id="pickTrip"><span class="ic">✈️</span><span><b>旅行について話す</b><small>行き先・時期・人数を聞いてプランと便の目安を出す（日本語／英語）</small></span></button>
+      <button class="job main pick" id="pickFree" style="background:var(--ink);border-color:var(--ink);color:var(--paper)"><span class="ic">💬</span><span><b>自由に話す</b><small>話題は何でもOK。雑談・相談・英語の練習も（日本語／英語）</small></span></button>
       <button class="job main pick" id="pickEng" style="background:var(--crimson);border-color:var(--crimson)"><span class="ic">🗣️</span><span><b>英会話をする（シチュエーション別）</b><small>レストラン・空港・クラブなど。間違えたら英語で直してくれる</small></span></button>
     </div>
     <div id="eHistWrap" hidden>
@@ -302,9 +304,9 @@ label.f input,label.f select,label.f textarea{display:block;width:100%;margin-to
     <div class="askrow">
       <button class="btn primary grow" id="send">送信</button>
       <button class="btn ghost" id="mic" aria-pressed="false">🎤 音声で入力</button>
-      <button class="btn ghost" id="askEnd">相談を終える</button>
+      <button class="btn ghost" id="askEnd">会話を終える</button>
     </div>
-    <p class="hint" id="askNote">アームストロングはネット検索やリアルタイムの運賃・時刻表の取得ができません。便は「よく使われる航空会社・経由地の目安」として出し、その日付のスカイスキャナー／Trip.comの検索リンクを付けます。実際の便・価格はリンク先で確認してください。「相談を終える」を押すと会話は消えます。</p>
+    <p class="hint" id="askNote">アームストロングはネット検索やリアルタイムの運賃・時刻表の取得ができません。便は「よく使われる航空会社・経由地の目安」として出し、その日付のスカイスキャナー／Trip.comの検索リンクを付けます。実際の便・価格はリンク先で確認してください。「会話を終える」を押すと会話は消えます。</p>
   </section>
 
   <h2>🥤 プロテインをあげる</h2>
@@ -1061,7 +1063,7 @@ async function askSend(text,hidden){
   history.push({role:"user",content:text});
   const el=add("ai",askLang==="en"?"Thinking…":"考えています…"); curAiEl=el;
   try{
-    const sys=SYSTEM+(askLang==="en"?EN_MODE:"")+`\n今日の日付：${iso(today)}`;
+    const sys=SYSTEM+(askMode==="free"?FREE_MODE:"")+(askLang==="en"?EN_MODE:"")+`\n今日の日付：${iso(today)}`;
     const msgs=[{role:"user",content:sys+"\n\n--- 会話開始 ---\n"+history[0].content},...history.slice(1)];
     const r=await sampleFn(msgs,{cache:false,tools,onText:({text})=>{ el.textContent=text; }});
     el.textContent=r.text; history.push({role:"assistant",content:r.text});
@@ -1075,7 +1077,7 @@ function askReset(){ try{ rec&&rec.stop(); }catch{} history.length=0; curAiEl=nu
 $("askEnd").addEventListener("click",()=>{
   if(busy) return;
   askReset();
-  toast("相談を終えました。会話は消去しました。");
+  toast("会話を終えました。会話は消去しました。");
   talkView("talkPick",true); if(mode!=="act") sit();
 });
 const ASK_OPEN={
@@ -1093,7 +1095,28 @@ function choiceBlock(host,groups,onPick){
   });
   host.appendChild(box); return box;
 }
+let askMode="trip";
+const FREE_MODE=`
+【自由に話すモード】
+- 今回は用件を決めない自由な会話。キリトのロープレのように、ユーザーと1対1で自然にやりとりする。
+- 話題は何でもOK（今日あったこと、筋トレ、食べ物、仕事、日本の生活、ネパール、夢、悩み相談など）。アームストロングらしく明るく、相手の話に反応してから、質問を1つ返して会話を続ける。1回の返事は2〜4文程度で短く。
+- 旅行・航空券・入国の話になったら、いつもの役割どおり対応してよい（ツールも使ってよい）。
+- 差別的・攻撃的・性的な話題や、危険な行為には乗らない。`;
+const FREE_OPEN={
+  ja:"（会話開始。ユーザーは日本語で自由に話すことを選んだ。あなたから話しかける。いつもの英語スラングのあいさつのあと、日本語中心で「今日どうだった？」など気軽な質問を1つだけする。ツールは使わない）",
+  en:"（会話開始。ユーザーは英語で自由に話すことを選んだ。英会話の練習も兼ねる。あなたから英語で気軽に話しかけ、簡単な質問を1つだけする。ツールは使わない）"
+};
+function freeStart(){
+  if(busy) return;
+  askMode="free"; askReset(); talkView("askRoom"); askLock(true);
+  add("ai","Yo yo yo, my dawg! 💪 なんでも話そうぜ。\nどっちで話す？");
+  choiceBlock($("log"),[{items:[{v:"ja",t:"🇯🇵 日本語で話す"},{v:"en",t:"🇺🇸 英語で話す",d:"英語チェックつき"}]}],(v,t)=>{
+    add("user",t); setAskLang(v); askLock(false);
+    askSend(FREE_OPEN[v],true).then(()=>$("q").focus());
+  });
+}
 function tripStart(lang,firstMsg){
+  askMode="trip";
   if(busy) return;
   askReset(); talkView("askRoom");
   if(lang){ setAskLang(lang); askLock(false); if(firstMsg){ $("q").value=firstMsg; $("send").click(); } else askSend(ASK_OPEN[lang],true); return; }
@@ -1426,6 +1449,7 @@ $("eMic").addEventListener("click",()=>{
 renderEHist();
 $("pickEng").addEventListener("click",engStart);
 $("pickTrip").addEventListener("click",()=>tripStart());
+$("pickFree").addEventListener("click",freeStart);
 document.querySelectorAll("[data-open]").forEach(a=>a.addEventListener("click",e=>{ e.preventDefault(); a.dataset.open==="eng"?engStart():tripStart(); }));
 update(); renderW();
 </script>
