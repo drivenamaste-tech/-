@@ -309,14 +309,20 @@ label.f input,label.f select,label.f textarea{display:block;width:100%;margin-to
       <button data-l="ja" aria-pressed="true">🇯🇵 日本語で相談</button>
       <button data-l="en" aria-pressed="false">🇺🇸 Englishで相談（英語チェックつき）</button>
     </div>
-    <textarea id="q" placeholder="例：12月にカトマンズから関空に1名。同じ航空会社で、乗継ビザ不要のルートで一番安い組み方は？"></textarea>
-    <div class="askrow">
-      <button class="btn primary grow" id="send">アームストロングに聞く</button>
-      <button class="btn ghost" id="mic" aria-pressed="false">🎤 音声で入力</button>
+    <div id="askStartBox">
+      <p style="margin:0;font-size:14px">ことばを選んで「相談を始める」を押すと、アームストロングのほうから「どこに・いつ・何人で行く？」と聞いてきます。答えていくと、プランや便の目安・検索リンクを出してくれます。</p>
+      <div class="askrow"><button class="btn primary grow" id="askStart">相談を始める</button></div>
     </div>
-    <div class="askrow"><button class="btn ghost" id="askEnd">相談を終える</button><button class="btn ghost grow" id="enTripStart">🇺🇸 アームストロングから英語で旅行の相談を始めてもらう</button></div>
-    <p class="hint" id="askNote">アームストロングはネット検索やリアルタイムの運賃・時刻表の取得ができません。便は「よく使われる航空会社・経由地の目安」として出し、その日付のスカイスキャナー／Trip.comの検索リンクを付けます。実際の便・価格はリンク先で確認してください。</p>
-    <div class="log" id="log" aria-live="polite"></div>
+    <div id="askRoom" hidden>
+      <div class="log" id="log" aria-live="polite"></div>
+      <textarea id="q" style="margin-top:12px" placeholder="アームストロングの質問に答えてください"></textarea>
+      <div class="askrow">
+        <button class="btn primary grow" id="send">送信</button>
+        <button class="btn ghost" id="mic" aria-pressed="false">🎤 音声で入力</button>
+        <button class="btn ghost" id="askEnd">相談を終える</button>
+      </div>
+    </div>
+    <p class="hint" id="askNote">アームストロングはネット検索やリアルタイムの運賃・時刻表の取得ができません。便は「よく使われる航空会社・経由地の目安」として出し、その日付のスカイスキャナー／Trip.comの検索リンクを付けます。実際の便・価格はリンク先で確認してください。「相談を終える」を押すと会話は消えます。</p>
   </section>
 
   <h2>🥤 プロテインをあげる</h2>
@@ -1096,14 +1102,14 @@ You said: "（ユーザーの不自然・誤った部分）" → Better: "（自
 - 旅行の相談は普通に進める（行き先・時期・人数・予算・目的を英語で質問して聞き出し、プランや便の目安を提案する）。`;
 function setAskLang(l){
   askLang=l; document.querySelectorAll("#askLangRow button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.l===l));
-  $("q").placeholder = l==="en" ? "e.g. I want to go to Kathmandu in December. Can you find me a cheap flight from Osaka?" : "例：12月にカトマンズから関空に1名。同じ航空会社で、乗継ビザ不要のルートで一番安い組み方は？";
+  $("q").placeholder = l==="en" ? "Answer Armstrong in English…" : "アームストロングの質問に答えてください";
 }
 $("askLangRow").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) setAskLang(b.dataset.l); });
 async function askSend(text,hidden){
   if(!text||busy) return;
   await sampleReady;
   if(!sampleFn){ add("ai","この表示では相談チャットを使えません。"); return; }
-  busy=true; $("send").disabled=true; $("enTripStart").disabled=true; office();
+  busy=true; $("send").disabled=true; office();
   if(!hidden) add("user",text);
   history.push({role:"user",content:text});
   const el=add("ai",askLang==="en"?"Thinking…":"考えています…"); curAiEl=el;
@@ -1116,19 +1122,28 @@ async function askSend(text,hidden){
   }catch(e){
     history.pop();
     el.textContent=e&&e.code==="rate_limited"?"混み合っています。少し待ってからもう一度送ってください。":e&&e.code==="not_granted"?"相談チャットの利用が許可されていません。検索フォームはそのまま使えます。":"回答を取得できませんでした。もう一度送ってください。";
-  }finally{ busy=false; $("send").disabled=false; $("enTripStart").disabled=false; }
+  }finally{ busy=false; $("send").disabled=false; }
 }
 $("send").addEventListener("click",()=>{ const t=$("q").value.trim(); if(!t) return; $("q").value=""; askSend(t,false); });
 $("askEnd").addEventListener("click",()=>{
   if(busy) return;
   try{speechSynthesis.cancel()}catch{}; try{ rec&&rec.stop(); }catch{}
   history.length=0; curAiEl=null; $("log").innerHTML=""; $("q").value="";
+  $("askRoom").hidden=true; $("askStartBox").hidden=false;
   toast("相談を終えました。会話は消去しました。");
   window.scrollTo({top:0,behavior:"instant"}); if(mode!=="act") sit();
 });
-$("enTripStart").addEventListener("click",()=>{
-  setAskLang("en"); location.hash="ask";
-  askSend("（ユーザーは英語で旅行の相談をしながら英会話を練習したい。あなたから英語で話しかけて会話を始める。挨拶して、どこへ・いつ・何人で・何をしに行きたいかを1〜2個だけ質問する。まだツールは使わない）",true);
+const ASK_OPEN={
+  ja:"（相談開始。あなたから話しかけて会話を始める。いつもの英語スラングのあいさつのあと、日本語中心で、今回は①外国人材の来日（入国）の航空券、②FLYYOU社員の出張、③旅行・観光 のどれかを聞き、行き先・時期・人数のうち1〜2個だけ質問する。一度にたくさん聞かない。まだツールは使わない）",
+  en:"（相談開始。ユーザーは英語で旅行の相談をしながら英会話も練習したい。あなたから英語で話しかけて会話を始める。挨拶して、どこへ・いつ・何人で・何をしに行きたいかのうち1〜2個だけ質問する。まだツールは使わない）"
+};
+function askOpenRoom(){ $("askStartBox").hidden=true; $("askRoom").hidden=false; }
+$("askStart").addEventListener("click",async()=>{
+  if(busy) return;
+  history.length=0; curAiEl=null; $("log").innerHTML=""; $("q").value="";
+  askOpenRoom();
+  await askSend(ASK_OPEN[askLang],true);
+  $("q").focus();
 });
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let rec=null;
@@ -1144,7 +1159,7 @@ $("mic").addEventListener("click",()=>{
 });
 $("planBtn").addEventListener("click",()=>{
   $("q").value="1月のネパール出張（1/16〜1/22、1/22出発・1/23関空着）の日程プランを作って。チトワン必須、カトマンズ2日、ヌワコット、エベレスト遊覧飛行を入れて。帰りの便の探し方も。";
-  location.hash="ask"; $("send").click();
+  askOpenRoom(); location.hash="ask"; $("send").click();
 });
 
 /* ================= English training ================= */
