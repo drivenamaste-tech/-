@@ -1,0 +1,612 @@
+<title>キリト営業ロープレ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
+<style>
+/* Layout: 3つの画面（設定 → 商談 → 講評）を1カラムで切り替える。商談画面だけ広い画面で左右2分割。 */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --sunk:#e8ecf0; --line:#d3d9e0;
+  --fg:#1b2330; --muted:#5a6676; --accent:#24477a; --accent-fg:#ffffff; --accent-soft:#e3eaf5;
+  --cust:#f6efe4; --cust-line:#e3d3b8; --me:#24477a; --me-fg:#ffffff;
+  --good:#1f7a4d; --warn:#a2650c; --bad:#b0362a;
+  --f-display:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161c; --surface:#1a2029; --sunk:#232b36; --line:#323c4a;
+  --fg:#e6eaf0; --muted:#9aa6b6; --accent:#8fb0e6; --accent-fg:#0f1620; --accent-soft:#223249;
+  --cust:#2a251d; --cust-line:#4a3f2e; --me:#2f5390; --me-fg:#f1f5fb;
+  --good:#5cc08c; --warn:#e0a54a; --bad:#ef7d70; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161c; --surface:#1a2029; --sunk:#232b36; --line:#323c4a;
+  --fg:#e6eaf0; --muted:#9aa6b6; --accent:#8fb0e6; --accent-fg:#0f1620; --accent-soft:#223249;
+  --cust:#2a251d; --cust-line:#4a3f2e; --me:#2f5390; --me-fg:#f1f5fb;
+  --good:#5cc08c; --warn:#e0a54a; --bad:#ef7d70; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1080px;margin:0 auto;padding-block:20px 40px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.35}
+h1{font-size:1.6rem;font-weight:900;letter-spacing:.02em}
+h2{font-size:1.15rem;font-weight:700}
+h3{font-size:1rem;font-weight:700}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.label{font-size:.75rem;letter-spacing:.08em;color:var(--muted);font-weight:700}
+button{font:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--accent-fg);border-radius:8px;padding:.6em 1.2em;font-weight:700}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.quiet{background:transparent;border-color:var(--line);color:var(--fg);font-weight:400}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:20px}
+header.top .who{display:flex;align-items:center;gap:12px}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-family:var(--f-display);font-weight:900;font-size:1.1rem;flex:none}
+.notice{background:var(--sunk);border-radius:8px;padding:10px 14px;font-size:.85rem;color:var(--muted)}
+.notice.err{color:var(--bad)}
+
+/* 設定画面 */
+.step{display:grid;gap:10px;margin-bottom:26px}
+.ind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ind{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:10px 12px;text-align:left;display:grid;gap:2px}
+.ind b{font-family:var(--f-display);font-size:.98rem}
+.ind span{font-size:.76rem;color:var(--muted);line-height:1.4}
+.ind[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:.4em 1em;font-size:.9rem}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+textarea,input[type=text]{width:100%;font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+textarea{resize:vertical;min-height:90px}
+.start-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+
+/* 商談画面 */
+.room{display:grid;grid-template-columns:280px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:820px){.room{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px}
+.persona dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:.88rem}
+.persona dt{color:var(--muted)}
+.persona dd{margin:0}
+.chip{display:inline-block;font-size:.75rem;border-radius:999px;padding:.1em .7em;background:var(--accent-soft);color:var(--accent);font-weight:700}
+.chat{display:flex;flex-direction:column;min-height:60vh;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;max-height:62vh}
+.msg{display:grid;gap:4px;max-width:86%;min-width:0}
+.msg .who{font-size:.75rem;color:var(--muted)}
+.msg .bubble{padding:10px 14px;border-radius:12px;white-space:pre-wrap;word-break:break-word}
+.msg.cust{align-self:flex-start}
+.msg.cust .bubble{background:var(--cust);border:1px solid var(--cust-line);border-top-left-radius:4px}
+.msg.me{align-self:flex-end}
+.msg.me .who{text-align:right}
+.msg.me .bubble{background:var(--me);color:var(--me-fg);border-top-right-radius:4px}
+.msg.hint{align-self:stretch;max-width:100%}
+.msg.hint .bubble{background:var(--sunk);border:1px dashed var(--line);font-size:.9rem}
+.compose{border-top:1px solid var(--line);padding:12px;display:grid;gap:8px}
+.compose textarea{min-height:70px}
+.compose .row{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}
+.compose .row .left,.compose .row .right{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toggle{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}
+
+/* 講評画面 */
+.report{display:grid;gap:18px}
+.score-head{display:flex;flex-wrap:wrap;gap:20px;align-items:center}
+.big{font-family:var(--f-display);font-weight:900;font-size:3rem;line-height:1;font-variant-numeric:tabular-nums}
+.big small{font-size:1rem;color:var(--muted);font-weight:500}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:9em minmax(0,1fr) 2.5em;gap:10px;align-items:center;font-size:.9rem}
+.bar .track{height:8px;background:var(--sunk);border-radius:99px;overflow:hidden}
+.bar .fill{height:100%;background:var(--accent);border-radius:99px}
+.bar .num{text-align:right;font-variant-numeric:tabular-nums}
+.items{display:grid;gap:10px}
+.item{border-left:3px solid var(--line);padding:4px 0 4px 12px;display:grid;gap:4px}
+.item.good{border-color:var(--good)}
+.item.bad{border-color:var(--bad)}
+.item.warn{border-color:var(--warn)}
+.quote{font-size:.88rem;color:var(--muted)}
+.better{font-size:.92rem}
+.better b{color:var(--good)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.history{display:grid;gap:6px;font-size:.88rem}
+.history div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding-block:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="who">
+      <div class="avatar" aria-hidden="true">キ</div>
+      <div>
+        <h1>キリト営業ロープレ</h1>
+        <p class="muted small">AI社員キリトがお客様役になります。特定技能の提案を練習し、終わったら講評を受け取れます。</p>
+      </div>
+    </div>
+    <button class="btn quiet" id="btnHome" hidden>設定に戻る</button>
+  </header>
+
+  <div class="notice err" id="unavail" hidden>この画面ではキリトと会話できません。claude.ai にサインインした状態で開いてください。</div>
+
+  <!-- 1. 設定 -->
+  <section id="vSetup">
+    <div class="step">
+      <h2>1. お客様の業種</h2>
+      <p class="muted small">特定技能の16分野から選びます。業種ごとに担当者の立場や気にする点が変わります。</p>
+      <div class="ind-grid" id="indGrid"></div>
+    </div>
+    <div class="step">
+      <h2>2. お客様の現状</h2>
+      <div class="seg" id="segStatus"></div>
+    </div>
+    <div class="step">
+      <h2>3. 難易度</h2>
+      <div class="seg" id="segLevel"></div>
+    </div>
+    <div class="step">
+      <h2>4. 自社の提案メモ（任意）</h2>
+      <p class="muted small">料金やサービス内容を書くと、講評で「説明が提案内容と合っていたか」も確認します。この内容はこのブラウザにだけ保存されます。実在のお客様名や個人情報は入力しないでください。</p>
+      <textarea id="offer" placeholder="例：登録支援 月額〇〇円/人、紹介料〇〇円、対応国籍〇〇、入国までの目安〇か月、母国語サポートあり など"></textarea>
+    </div>
+    <div class="start-row">
+      <button class="btn" id="btnStart">商談を始める</button>
+      <span class="muted small" id="startNote">業種を選んでください</span>
+    </div>
+    <div class="step" style="margin-top:30px" id="histWrap" hidden>
+      <h2>これまでの練習（このブラウザ内）</h2>
+      <div class="history" id="hist"></div>
+    </div>
+  </section>
+
+  <!-- 2. 商談 -->
+  <section id="vRoom" hidden>
+    <div class="room">
+      <aside class="card persona" id="personaCard"></aside>
+      <div class="chat">
+        <div class="log" id="log" aria-live="polite"></div>
+        <div class="compose">
+          <label for="say" class="label">あなた（営業）の発言</label>
+          <textarea id="say" placeholder="例：本日はお時間をいただきありがとうございます。株式会社〇〇の△△と申します。"></textarea>
+          <div class="row">
+            <div class="left">
+              <button class="btn" id="btnSend">送信</button>
+              <button class="btn ghost" id="btnHint">ヒント</button>
+              <label class="toggle"><input type="checkbox" id="tts"> キリトの発言を読み上げる</label>
+            </div>
+            <div class="right">
+              <button class="btn quiet" id="btnStop" hidden>止める</button>
+              <button class="btn ghost" id="btnEnd">商談を終えて講評へ</button>
+            </div>
+          </div>
+          <p class="muted small" id="roomNote">Ctrl+Enter（Macは⌘+Enter）でも送信できます。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 講評 -->
+  <section id="vReport" hidden>
+    <div class="report" id="report"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+// ===== 業種データ（特定技能16分野） =====
+const IND = [
+ {id:"kaigo",name:"介護",sub:"特養・デイ・グループホーム",org:"社会福祉法人が運営する特別養護老人ホーム（定員80名）",role:"施設長",
+  focus:["夜勤に入れるようになるまでの期間","人員配置基準に数えられるか","利用者や家族との日本語でのやりとり","介護福祉士の資格を目指せるか","既存の日本人職員との関係"],
+  q:["夜勤は1人で任せられますか","介護の日本語試験はどのレベルですか","利用者さんのご家族から苦情が出ないか心配です","寮や住まいはどうすればいいですか"]},
+ {id:"clean",name:"ビルクリーニング",sub:"清掃・ビルメンテナンス",org:"オフィスビルや商業施設の清掃を請け負うビルメンテナンス会社（従業員120名）",role:"人事部 採用担当",
+  focus:["早朝・夜間シフトへの対応","複数現場への移動","現場責任者の負担","定着率"],
+  q:["早朝や夜間の現場にも入れますか","現場が複数あっても大丈夫ですか","すぐ辞めてしまわないか心配です"]},
+ {id:"seizo",name:"工業製品製造業",sub:"機械・金属・電気電子など",org:"自動車部品を作る金属加工メーカー（従業員200名）",role:"総務人事課長",
+  focus:["技能実習からの移行","3交代勤務","安全教育","日本語での作業指示の理解"],
+  q:["技能実習の子を特定技能に切り替えるといくらかかりますか","交代勤務はできますか","安全教育は誰がやるんですか"]},
+ {id:"kensetsu",name:"建設",sub:"土木・建築・設備",org:"型枠・鉄筋工事の専門工事会社（従業員45名）",role:"代表取締役（採用も兼任）",
+  focus:["受入れに必要な手続や加入する団体の費用","建設キャリアアップシステムの登録","現場での安全・日本語","雨の日など仕事がない日の給与"],
+  q:["建設は他より手続が多いと聞きましたが本当ですか","業界団体の会費みたいなのは別にかかるんですか","現場で日本語は通じますか"]},
+ {id:"zosen",name:"造船・舶用工業",sub:"溶接・塗装・鉄工",org:"地方の造船所の協力会社（従業員60名）",role:"工場長",
+  focus:["溶接などの技能レベル","地方での生活環境","長く働いてくれるか"],
+  q:["溶接の腕は試験でどこまで確認されていますか","田舎なので生活面が心配です","何年くらい働いてもらえますか"]},
+ {id:"jidosha",name:"自動車整備",sub:"整備工場・ディーラー",org:"地域の自動車整備工場（従業員25名）",role:"社長",
+  focus:["整備士資格との関係","お客様対応","少人数の職場でのサポート"],
+  q:["整備士の資格は取れるようになりますか","お客さんと話す場面もありますが大丈夫ですか","うちみたいな小さい会社でも受け入れられますか"]},
+ {id:"koku",name:"航空",sub:"空港グランドハンドリング・航空機整備",org:"空港で手荷物や機体誘導を行うグランドハンドリング会社（従業員300名）",role:"人事部 採用マネージャー",
+  focus:["空港の制限区域に入るための手続","シフト勤務","安全基準と教育"],
+  q:["空港の入構許可はスムーズに取れますか","早朝便のシフトに対応できますか","安全教育の負担はどのくらいですか"]},
+ {id:"shukuhaku",name:"宿泊",sub:"ホテル・旅館",org:"温泉地の旅館（客室40室）",role:"女将（経営者）",
+  focus:["フロントでの接客","繁忙期と閑散期の差","寮や食事の手配"],
+  q:["フロントで日本人のお客様の対応はできますか","閑散期はどうしたらいいですか","住み込みでも大丈夫ですか"]},
+ {id:"nogyo",name:"農業",sub:"耕種・畜産",org:"施設園芸（トマト）を営む農業法人（従業員15名）",role:"代表",
+  focus:["季節による仕事量の差","派遣という形も使えるか","住まいと移動手段","費用の負担感"],
+  q:["派遣でもお願いできると聞いたんですが","冬は仕事が減るんですがどうすればいいですか","車がないと通えない場所ですが大丈夫ですか"]},
+ {id:"gyogyo",name:"漁業",sub:"漁業・養殖",org:"ホタテ養殖を行う漁業会社（従業員20名）",role:"社長",
+  focus:["船に乗る仕事の安全","漁期による仕事量の差","地域での生活"],
+  q:["船に乗るのは初めての人でも大丈夫ですか","漁がない時期の扱いはどうなりますか","港町なので遊ぶところもないですが"]},
+ {id:"inshoku",name:"飲食料品製造業",sub:"食品工場・惣菜・パン",org:"スーパー向けの惣菜工場（従業員150名）",role:"工場の人事総務担当",
+  focus:["衛生管理のルールを守れるか","早朝・夜間のライン作業","まとまった人数の採用"],
+  q:["一度に10人くらい採用できますか","衛生ルールの教育はどうしたらいいですか","夜勤のラインにも入れますか"]},
+ {id:"gaishoku",name:"外食業",sub:"レストラン・居酒屋・ファストフード",org:"居酒屋とラーメン店を6店舗経営する飲食企業",role:"人事・店舗統括マネージャー",
+  focus:["ホールでの接客とキッチン","深夜営業との関係","店舗間の異動","アルバイト経験のある留学生からの切替"],
+  q:["ホールで接客もさせられますか","うちの留学生バイトを特定技能にできますか","店舗間で異動させてもいいですか"]},
+ {id:"unso",name:"自動車運送業",sub:"トラック・タクシー・バス",org:"地場の運送会社（トラック50台）",role:"運行管理部長 兼 採用担当",
+  focus:["日本の運転免許の取得","運転できるようになるまでの期間","事故のリスクと保険","荷主とのやりとり"],
+  q:["日本の免許はどうやって取るんですか","実際に運転できるまで何か月くらいかかりますか","事故を起こしたらと思うと不安です"]},
+ {id:"tetsudo",name:"鉄道",sub:"軌道整備・車両整備・駅",org:"鉄道会社の保線作業を請け負う協力会社（従業員80名）",role:"総務部長",
+  focus:["夜間の線路作業","安全規則の理解","資格や講習"],
+  q:["夜間作業が中心ですが大丈夫ですか","安全のルールは日本語で理解できますか","必要な講習は誰が受けさせるんですか"]},
+ {id:"ringyo",name:"林業",sub:"育林・素材生産",org:"森林組合から伐採作業を受注する林業会社（従業員18名）",role:"代表",
+  focus:["山の中での危険作業","重機・チェーンソーの扱い","山間部での生活"],
+  q:["チェーンソーの扱いは大丈夫ですか","山奥なので生活が不便ですが","何人くらいから受け入れられますか"]},
+ {id:"mokuzai",name:"木材産業",sub:"製材・合板",org:"製材工場（従業員40名）",role:"工場長",
+  focus:["機械作業の安全","重いものを扱う作業","長期的な戦力化"],
+  q:["機械が多い職場なので安全面が心配です","力仕事が中心ですがいいですか","長く働いてもらうにはどうしたらいいですか"]}
+];
+const STATUS = [
+ {id:"new",name:"初めて検討",desc:"外国人の雇用経験がない。制度もよく知らない。"},
+ {id:"tokutei",name:"他の登録支援機関を利用中",desc:"すでに他社に支援を委託しており、費用や対応に不満が少しある。"},
+ {id:"jisshu",name:"技能実習（組合）を利用中",desc:"監理団体（組合）経由で技能実習生を受け入れている。特定技能への切替や今後の制度変更が気になっている。"},
+ {id:"cold",name:"情報収集だけ",desc:"上から言われて話を聞いているだけで、導入にあまり前向きではない。"}
+];
+const LEVEL = [
+ {id:"easy",name:"やさしい",desc:"協力的で、こちらの話をよく聞いてくれる。質問は基本的なものが中心。"},
+ {id:"normal",name:"ふつう",desc:"一般的な担当者。費用や手間を気にし、納得できないと前に進まない。"},
+ {id:"hard",name:"きびしい",desc:"忙しく、懐疑的。他社と比べて値引きを求め、曖昧な答えには突っ込む。話が長いと遮る。"}
+];
+const COMMON_Q = [
+ "結局いくらかかりますか。初期費用と月額を分けて教えてください",
+ "一人あたり年間トータルでいくらぐらいになりますか",
+ "見積もりは出せますか",
+ "どこの国の人が多いですか。国籍は選べますか",
+ "日本語はどのくらい話せますか",
+ "申し込んでから実際に働き始めるまで何か月かかりますか",
+ "他社さんはもっと安かったんですが、違いは何ですか",
+ "すぐ辞めたり、他の会社に移ったりしませんか",
+ "トラブルがあった時はどこまで対応してくれますか",
+ "給料は日本人と同じにしないといけないんですか",
+ "住まいはこちらで用意する必要がありますか",
+ "御社の実績はどのくらいありますか",
+ "途中で契約を解約することはできますか"
+];
+const SURNAMES = ["高橋","佐々木","山口","松本","井上","木村","林","清水","森","池田"];
+
+// ===== 状態 =====
+const S = {ind:null,status:"new",level:"normal",persona:null,turns:[],busy:false,ctl:null};
+const $ = (id) => document.getElementById(id);
+const store = {
+  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+};
+let sample = null;
+window.claude?.use?.("sample").then(s => { sample = s; if(!s) $("unavail").hidden = false; }).catch(()=>{ $("unavail").hidden = false; });
+
+// ===== 設定画面 =====
+function renderSetup(){
+  const g = $("indGrid"); g.textContent = "";
+  IND.forEach(it => {
+    const b = document.createElement("button");
+    b.className = "ind"; b.type = "button"; b.setAttribute("aria-pressed", String(S.ind===it.id));
+    b.innerHTML = `<b></b><span></span>`;
+    b.querySelector("b").textContent = it.name; b.querySelector("span").textContent = it.sub;
+    b.onclick = () => { S.ind = it.id; renderSetup(); };
+    g.appendChild(b);
+  });
+  seg($("segStatus"), STATUS, "status");
+  seg($("segLevel"), LEVEL, "level");
+  $("btnStart").disabled = !S.ind;
+  const st = STATUS.find(x=>x.id===S.status), lv = LEVEL.find(x=>x.id===S.level);
+  $("startNote").textContent = S.ind ? `${IND.find(x=>x.id===S.ind).name}／${st.name}／${lv.name}：${lv.desc}` : "業種を選んでください";
+  renderHistory();
+}
+function seg(el, list, key){
+  el.textContent = "";
+  list.forEach(it => {
+    const b = document.createElement("button"); b.type="button";
+    b.textContent = it.name; b.title = it.desc; b.setAttribute("aria-pressed", String(S[key]===it.id));
+    b.onclick = () => { S[key] = it.id; renderSetup(); };
+    el.appendChild(b);
+  });
+}
+function renderHistory(){
+  const h = store.get("kirito_hist", []);
+  $("histWrap").hidden = !h.length;
+  const el = $("hist"); el.textContent = "";
+  h.slice(-10).reverse().forEach(r => {
+    const d = document.createElement("div");
+    const a = document.createElement("span"); a.textContent = `${r.date}　${r.ind}／${r.status}／${r.level}`;
+    const b = document.createElement("b"); b.textContent = r.score!=null ? `${r.score}点` : "—";
+    d.append(a,b); el.appendChild(d);
+  });
+}
+$("offer").value = store.get("kirito_offer", "");
+$("offer").addEventListener("input", e => store.set("kirito_offer", e.target.value));
+
+// ===== ペルソナ生成 =====
+const pick = (a) => a[Math.floor(Math.random()*a.length)];
+function makePersona(){
+  const it = IND.find(x=>x.id===S.ind);
+  const st = STATUS.find(x=>x.id===S.status);
+  const lv = LEVEL.find(x=>x.id===S.level);
+  const p = {it, st, lv, surname: pick(SURNAMES)};
+  if (S.status==="tokutei"){
+    p.current = `他の登録支援機関に特定技能外国人${pick([3,5,8])}名の支援を委託中。支援委託費は1人あたり月額${pick(["2万円","2万5千円","3万円","3万5千円"])}。不満点：${pick(["担当者のレスポンスが遅い","面談の報告が形だけ","通訳が来るまで時間がかかる","退職者が続いた"])}`;
+  } else if (S.status==="jisshu"){
+    p.current = `監理団体（組合）経由で技能実習生を${pick([4,6,10])}名受入れ中。監理費は1人あたり月額${pick(["3万円","4万円","5万円"])}。実習修了後に特定技能へ移行させるか、育成就労制度への移行で何が変わるか気にしている`;
+  } else if (S.status==="cold"){
+    p.current = "外国人の雇用経験はない。経営陣から「人手不足対策の情報を集めて」と言われ、とりあえず話を聞いている";
+  } else {
+    p.current = "外国人の雇用経験はない。求人を出しても日本人が集まらず、特定技能に興味を持ち始めた";
+  }
+  p.hidden = pick(it.focus);
+  return p;
+}
+function rulesFor(p){
+  const offer = $("offer").value.trim();
+  return `あなたはAI社員「キリト」です。株式会社FLYYOUの営業スタッフの練習相手として、【お客様役】を演じます。これは営業ロールプレイ（研修）です。
+
+# あなたが演じるお客様
+- 業種（特定技能の分野）：${p.it.name}
+- 会社：${p.it.org}
+- あなたの立場：${p.it.role}（${p.surname}）
+- 現状：${p.current}
+- 態度・難易度：${p.lv.name}。${p.lv.desc}
+- 一番気にしていること（自分からは最初に言わない。営業がうまくヒアリングできたら打ち明ける）：${p.hidden}
+- この業種で気になりやすい点：${p.it.focus.join("、")}
+
+# 質問の候補（会話の流れに合わせて自然に、一度に1つか2つだけ）
+業種特有：${p.it.q.join("／")}
+共通：${COMMON_Q.join("／")}
+
+# 演じ方のルール
+- 常にお客様として話す。営業役や講師にならない。アドバイスもしない。AIであることにも触れない。
+- 日本語のB2B商談の話し言葉で、1回の発言は1〜4文程度。長い説明はしない。
+- 相手の発言にまず反応し（「なるほど」「うーん」など）、それから質問や懸念を返す。
+- 営業の説明が曖昧・抽象的なら具体的な数字や事例を求める。料金の説明が不十分なら、初期費用・月額・年間総額を聞く。
+- 現状に書かれた他社の料金や不満は、聞かれたら・比較の話になったら自然に出す。
+- 営業の言葉づかいが馴れ馴れしい、押しが強い、専門用語ばかり、話が長い、こちらの話を聞かない、といった場合は、難易度に応じて少し引いた反応をする（「ちょっと考えさせてください」「で、結局何が違うんですか」など）。
+- 良い提案が出れば前向きになり、見積もりや次回の打合せの話に進んでもよい。
+- 営業が「本日はここまで」など商談を締めたら、お客様として自然に締めくくる。
+- 発言には話した内容だけを書く。ト書き、括弧書きの心情、名前の見出しは付けない。
+${offer ? `\n# 参考：営業側の会社が用意している提案内容（お客様は知らない前提。比較や質問のきっかけにだけ使う）\n${offer}\n` : ""}`;
+}
+
+// ===== 商談画面 =====
+function renderPersona(p){
+  const c = $("personaCard"); c.textContent = "";
+  const h = document.createElement("div");
+  h.innerHTML = `<span class="label">今回のお客様（キリトが演じます）</span>`;
+  const t = document.createElement("h2"); t.textContent = `${p.it.name}｜${p.it.role}`;
+  const dl = document.createElement("dl");
+  [["お名前",`${p.surname}様（架空）`],["会社",p.it.org],["現状",p.st.name],["難易度",p.lv.name]].forEach(([k,v])=>{
+    const dt=document.createElement("dt"); dt.textContent=k; const dd=document.createElement("dd"); dd.textContent=v; dl.append(dt,dd);
+  });
+  const n = document.createElement("p"); n.className="muted small";
+  n.textContent = "お客様が本当に気にしていることは隠されています。ヒアリングで引き出してください。講評で答え合わせができます。";
+  c.append(h,t,dl,n);
+}
+function addMsg(kind, text){
+  const m = document.createElement("div"); m.className = `msg ${kind}`;
+  const w = document.createElement("div"); w.className="who";
+  w.textContent = kind==="me" ? "あなた（営業）" : kind==="hint" ? "キリトのヒント（お客様役を一時離れて）" : `${S.persona.surname}様（${S.persona.it.role}）`;
+  const b = document.createElement("div"); b.className="bubble"; b.textContent = text;
+  m.append(w,b); $("log").appendChild(m); $("log").scrollTop = $("log").scrollHeight;
+  return b;
+}
+function setBusy(v){
+  S.busy = v;
+  ["btnSend","btnHint","btnEnd"].forEach(id => $(id).disabled = v);
+  $("btnStop").hidden = !v;
+}
+function speak(text){
+  if (!$("tts").checked || !("speechSynthesis" in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.lang = "ja-JP"; u.rate = 1.05;
+    const v = speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith("ja")); if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  }catch{}
+}
+function errText(e){
+  const c = e && e.code;
+  if (c==="not_granted") return "キリトとの会話が許可されていません。画面の許可設定を確認してください。";
+  if (c==="rate_limited") return "利用が集中しています。少し待ってからもう一度送信してください。";
+  if (c==="cancelled") return "";
+  return "応答を受け取れませんでした。もう一度送信してください。";
+}
+async function custReply(){
+  if (!sample){ $("roomNote").textContent = "キリトと接続できていません。claude.ai にサインインして開き直してください。"; return; }
+  setBusy(true);
+  const bubble = addMsg("cust","…");
+  S.ctl = new AbortController();
+  try{
+    const {text} = await sample([{role:"user",content:rulesFor(S.persona)}, ...S.turns], {
+      cache:false, signal:S.ctl.signal, modelTier:"default",
+      onText:({text}) => { bubble.textContent = text; $("log").scrollTop = $("log").scrollHeight; }
+    });
+    const t = text.trim(); bubble.textContent = t;
+    S.turns.push({role:"assistant",content:t});
+    speak(t);
+    $("roomNote").textContent = "Ctrl+Enter（Macは⌘+Enter）でも送信できます。";
+  }catch(e){
+    bubble.parentElement.remove();
+    // 失敗したら直前の営業発言を入力欄に戻す
+    const last = S.turns[S.turns.length-1];
+    if (last && last.role==="user" && last.content!==OPEN){ S.turns.pop(); $("say").value = last.content; const ms=$("log").querySelectorAll(".msg.me"); ms[ms.length-1]?.remove(); }
+    $("roomNote").textContent = errText(e);
+  }finally{ setBusy(false); }
+}
+const OPEN = "（商談開始。営業担当者が応接室に入ってきました。お客様として最初の一言をどうぞ）";
+async function start(){
+  S.persona = makePersona(); S.turns = [{role:"user",content:OPEN}];
+  $("log").textContent = ""; $("say").value = "";
+  renderPersona(S.persona); show("vRoom");
+  await custReply();
+  $("say").focus();
+}
+async function send(){
+  const v = $("say").value.trim(); if (!v || S.busy) return;
+  $("say").value = ""; addMsg("me", v); S.turns.push({role:"user",content:v});
+  await custReply();
+}
+function transcript(){
+  return S.turns.filter(t=>t.content!==OPEN).map(t => (t.role==="user"?"営業：":"お客様：")+t.content).join("\n");
+}
+async function hint(){
+  if (!sample || S.busy) return;
+  setBusy(true);
+  const b = addMsg("hint","考えています…");
+  S.ctl = new AbortController();
+  try{
+    await sample(`あなたはB2B営業のコーチです。特定技能人材の紹介・登録支援を提案する営業ロールプレイの途中です。
+お客様の設定：${S.persona.it.name}分野、${S.persona.it.org}の${S.persona.it.role}。現状：${S.persona.current}。
+お客様が隠している本音（営業には明かさないこと）：${S.persona.hidden}
+
+これまでの会話：
+${transcript() || "（まだ営業は発言していません）"}
+
+営業が次に言うとよい発言を、日本語で次の形式だけで短く答えてください。
+・ねらい：（1行）
+・言い方の例：「（そのまま使える1〜3文）」
+・避けたい言い方：（1行）
+隠れた本音そのものは書かず、引き出すための質問の方向性だけ示してください。制度の細かな数字は断定しないでください。`, {
+      cache:false, signal:S.ctl.signal, modelTier:"quick",
+      onText:({text}) => { b.textContent = text; }
+    });
+  }catch(e){ b.textContent = errText(e) || "ヒントを止めました。"; }
+  finally{ setBusy(false); }
+}
+
+// ===== 講評 =====
+async function finish(){
+  if (S.busy) return;
+  const mine = S.turns.filter(t=>t.role==="user" && t.content!==OPEN);
+  if (!mine.length){ $("roomNote").textContent = "講評するには、少なくとも1回は発言してください。"; return; }
+  speechSynthesis?.cancel?.();
+  show("vReport");
+  const r = $("report");
+  r.innerHTML = `<div class="card"><h2>講評を作成しています</h2><p class="muted">キリトが会話を振り返っています。30秒ほどかかることがあります。</p></div>`;
+  const offer = $("offer").value.trim();
+  const prompt = `あなたはAI社員「キリト」として、B2B営業（法人向け）の指導役を務めます。特定技能人材の紹介・登録支援サービスの営業ロールプレイを講評してください。
+
+# お客様の設定
+- 分野：${S.persona.it.name}
+- 会社：${S.persona.it.org}
+- 立場：${S.persona.it.role}
+- 現状：${S.persona.current}
+- 難易度：${S.persona.lv.name}
+- 隠れた本音：${S.persona.hidden}
+${offer ? `\n# 営業側の会社の提案内容メモ\n${offer}\n` : ""}
+# 会話記録
+${transcript()}
+
+# 講評の観点
+1. ヒアリング：相手の課題・現状・決裁の流れを質問で引き出したか。隠れた本音に気づけたか。
+2. 提案の分かりやすさ：相手の業種・課題に合わせて、結論から具体的に話したか。
+3. 費用の説明：初期費用・月額・年間総額などを明確に、根拠とともに示せたか。曖昧にしていないか。
+4. 懸念・反論への対応：他社比較、退職・転職リスク、日本語力などの不安に、否定せず受け止めて答えたか。
+5. 言葉づかい：敬語の誤り（二重敬語、バイト敬語、「〜になります」の多用など）、馴れ馴れしさ、専門用語の多用、話の長さ。相手が引く言い方がなかったか。
+6. 次の行動につなげたか：見積もり、次回日程、決裁者への同席依頼など。
+B2B営業の基本（相手の時間を尊重する、決裁者と決裁プロセスを確認する、相手の言葉で課題を言い直す、競合を悪く言わない、約束できないことを約束しない等）に照らしてください。
+営業の発言の中に、特定技能制度について事実と違う可能性がある説明や、断定しすぎている説明があれば「制度説明の要確認」に挙げてください（あなたの知識が古い可能性もあるため、公式情報で確認するよう促す書き方にする）。
+${offer ? "提案内容メモと発言内容が食い違っていれば、それも指摘してください。" : ""}
+
+# 出力
+次のJSONだけを返してください。日本語で。quoteは営業の実際の発言から短く引用。
+{
+ "score": 0〜100の整数,
+ "summary": "総評（2〜3文）",
+ "scores": {"ヒアリング":0〜100,"提案の分かりやすさ":0〜100,"費用の説明":0〜100,"懸念への対応":0〜100,"言葉づかい":0〜100,"次の行動":0〜100},
+ "good": [{"point":"良かった点","quote":"該当発言"}],
+ "improve": [{"point":"改善点","quote":"該当発言","better":"言い換え例"}],
+ "ng_words": [{"quote":"避けたい表現","why":"相手にどう聞こえるか","better":"言い換え"}],
+ "hidden_need": {"answer":"隠れた本音","found":true/false,"how":"どうすれば引き出せたか"},
+ "fact_check": ["制度説明の要確認（なければ空配列）"],
+ "next_practice": "次回の練習で意識すること（1〜2文）"
+}`;
+  try{
+    if (!sample) throw {code:"unavailable"};
+    const j = await sample.json(prompt, {modelTier:"default"});
+    renderReport(j);
+    const h = store.get("kirito_hist", []);
+    const d = new Date();
+    h.push({date:`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`,ind:S.persona.it.name,status:S.persona.st.name,level:S.persona.lv.name,score:Number.isFinite(j.score)?j.score:null});
+    store.set("kirito_hist", h.slice(-30));
+  }catch(e){
+    r.innerHTML = `<div class="card"><h2>講評を作成できませんでした</h2><p class="muted"></p><div class="start-row"><button class="btn" id="retry">もう一度講評する</button><button class="btn ghost" id="back">商談に戻る</button></div></div>`;
+    r.querySelector("p").textContent = errText(e) || "もう一度お試しください。";
+    $("retry").onclick = finish; $("back").onclick = () => show("vRoom");
+  }
+}
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+function renderReport(j){
+  const r = $("report"); r.textContent = "";
+  const head = el("div","card");
+  const sh = el("div","score-head");
+  const big = el("div","big"); big.textContent = Number.isFinite(j.score)? j.score : "—"; big.appendChild(el("small",null," / 100"));
+  const sm = el("div"); sm.style.minWidth="0"; sm.style.flex="1 1 260px";
+  sm.append(el("span","label",`${S.persona.it.name}｜${S.persona.it.role}｜${S.persona.st.name}｜${S.persona.lv.name}`), el("p",null,j.summary||""));
+  sh.append(big, sm); head.append(sh);
+  const bars = el("div","bars");
+  Object.entries(j.scores||{}).forEach(([k,v])=>{
+    const row = el("div","bar"); const tr = el("div","track"); const f = el("div","fill");
+    const n = Math.max(0,Math.min(100,Number(v)||0)); f.style.width = n+"%"; tr.append(f);
+    row.append(el("span",null,k), tr, el("span","num",String(n))); bars.append(row);
+  });
+  head.append(bars); r.append(head);
+
+  const cols = el("div","cols");
+  const good = el("div","card"); good.append(el("h3",null,"良かった点"));
+  const gi = el("div","items"); (j.good||[]).forEach(x=>{ const it=el("div","item good"); it.append(el("p",null,x.point)); if(x.quote) it.append(el("p","quote","「"+x.quote+"」")); gi.append(it); });
+  if(!(j.good||[]).length) gi.append(el("p","muted small","該当なし"));
+  good.append(gi);
+  const imp = el("div","card"); imp.append(el("h3",null,"改善点"));
+  const ii = el("div","items"); (j.improve||[]).forEach(x=>{ const it=el("div","item warn"); it.append(el("p",null,x.point)); if(x.quote) it.append(el("p","quote","あなた：「"+x.quote+"」")); if(x.better){ const b=el("p","better"); b.append(el("b",null,"言い換え例："), document.createTextNode("「"+x.better+"」")); it.append(b);} ii.append(it); });
+  if(!(j.improve||[]).length) ii.append(el("p","muted small","該当なし"));
+  imp.append(ii);
+  cols.append(good, imp); r.append(cols);
+
+  const ng = el("div","card"); ng.append(el("h3",null,"相手が引いてしまう言い方・日本語の注意点"));
+  const ni = el("div","items"); (j.ng_words||[]).forEach(x=>{ const it=el("div","item bad"); it.append(el("p",null,"「"+(x.quote||"")+"」")); if(x.why) it.append(el("p","quote",x.why)); if(x.better){ const b=el("p","better"); b.append(el("b",null,"言い換え："), document.createTextNode("「"+x.better+"」")); it.append(b);} ni.append(it); });
+  if(!(j.ng_words||[]).length) ni.append(el("p","muted small","特に見つかりませんでした。"));
+  ng.append(ni); r.append(ng);
+
+  const cols2 = el("div","cols");
+  const hn = el("div","card"); hn.append(el("h3",null,"お客様の隠れた本音"));
+  const hv = j.hidden_need||{};
+  hn.append(el("p",null,hv.answer||S.persona.hidden));
+  const chip = el("span","chip", hv.found ? "引き出せました" : "引き出せませんでした"); chip.style.justifySelf="start";
+  if(!hv.found){ chip.style.background="var(--sunk)"; chip.style.color="var(--bad)"; }
+  hn.append(chip); if(hv.how) hn.append(el("p","muted small",hv.how));
+  const fc = el("div","card"); fc.append(el("h3",null,"制度説明の要確認"));
+  const fl = (j.fact_check||[]);
+  if(fl.length){ const ul=el("div","items"); fl.forEach(t=>{ const it=el("div","item warn"); it.append(el("p",null,t)); ul.append(it); }); fc.append(ul); }
+  else fc.append(el("p","muted small","指摘はありませんでした。"));
+  fc.append(el("p","muted small","制度・要件・費用相場は変わることがあります。お客様に説明する前に、出入国在留管理庁や分野を所管する省庁の公式情報で確認してください。"));
+  cols2.append(hn, fc); r.append(cols2);
+
+  const nx = el("div","card"); nx.append(el("h3",null,"次回の練習で意識すること"), el("p",null,j.next_practice||""));
+  const row = el("div","start-row");
+  const again = el("button","btn","同じ設定でもう一度"); again.onclick = start;
+  const chg = el("button","btn ghost","設定を変える"); chg.onclick = () => show("vSetup");
+  const log = el("button","btn quiet","会話を見直す"); log.onclick = () => show("vRoom");
+  row.append(again, chg, log); nx.append(row); r.append(nx);
+}
+
+// ===== 画面切替 =====
+function show(id){
+  ["vSetup","vRoom","vReport"].forEach(v => $(v).hidden = v!==id);
+  $("btnHome").hidden = id==="vSetup";
+  if (id==="vSetup") renderSetup();
+  window.scrollTo(0,0);
+}
+$("btnStart").onclick = start;
+$("btnSend").onclick = send;
+$("btnHint").onclick = hint;
+$("btnEnd").onclick = finish;
+$("btnStop").onclick = () => S.ctl?.abort();
+$("btnHome").onclick = () => { S.ctl?.abort(); try{speechSynthesis.cancel()}catch{}; show("vSetup"); };
+$("say").addEventListener("keydown", e => { if (e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); send(); } });
+$("tts").checked = store.get("kirito_tts", false);
+$("tts").addEventListener("change", e => { store.set("kirito_tts", e.target.checked); if(!e.target.checked) try{speechSynthesis.cancel()}catch{} });
+if (!("speechSynthesis" in window)) $("tts").closest("label").hidden = true;
+renderSetup();
+})();
+</script>
