@@ -1,0 +1,506 @@
+<title>FLYYOU通訳デスク</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+Myanmar:wght@400;700&display=swap">
+<style>
+/* Layout: 上で通訳社員を選び、タブで「説明モード／会話モード／会話練習」を切り替える。結果は下に新しい順。 */
+:root{
+  --bg:#f2f5f4; --surface:#ffffff; --sunk:#e6ecea; --line:#cfd9d6;
+  --fg:#18231f; --muted:#56655f; --accent:#1d5e52; --accent-fg:#ffffff; --accent-soft:#dcebe7;
+  --id:#b3261e; --id-soft:#f8e3e1; --mm:#a06c00; --mm-soft:#f7ecd2;
+  --jp:#e9eef6; --jp-line:#cbd6e6; --rec:#c62828; --warn:#9a5f08; --bad:#b0362a;
+  --f-display:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+  --f-my:"Noto Sans Myanmar","Myanmar Text","Padauk",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111816; --surface:#18211e; --sunk:#212c28; --line:#33413c;
+  --fg:#e5ece9; --muted:#97a8a1; --accent:#7cc4b4; --accent-fg:#0d1714; --accent-soft:#1f3631;
+  --id:#f08a80; --id-soft:#3a2321; --mm:#e7b54a; --mm-soft:#3a2f17;
+  --jp:#1e2733; --jp-line:#334256; --rec:#ff6b6b; --warn:#e0a54a; --bad:#ef7d70; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111816; --surface:#18211e; --sunk:#212c28; --line:#33413c;
+  --fg:#e5ece9; --muted:#97a8a1; --accent:#7cc4b4; --accent-fg:#0d1714; --accent-soft:#1f3631;
+  --id:#f08a80; --id-soft:#3a2321; --mm:#e7b54a; --mm-soft:#3a2f17;
+  --jp:#1e2733; --jp-line:#334256; --rec:#ff6b6b; --warn:#e0a54a; --bad:#ef7d70; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.7;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1000px;margin:0 auto;padding-block:18px 40px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.35}
+h1{font-size:1.5rem;font-weight:900;letter-spacing:.02em}
+h2{font-size:1.05rem;font-weight:700}
+p{margin:0}
+.muted{color:var(--muted)} .small{font-size:.84rem}
+.label{font-size:.74rem;letter-spacing:.08em;color:var(--muted);font-weight:700}
+button{font:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--accent-fg);border-radius:8px;padding:.55em 1.15em;font-weight:700}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.quiet{background:transparent;border-color:var(--line);color:var(--fg);font-weight:400;padding:.3em .8em;font-size:.84rem}
+.btn.rec{background:var(--rec);border-color:var(--rec);color:#fff}
+.back{justify-self:start}
+header.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.notice{background:var(--sunk);border-radius:8px;padding:10px 14px;font-size:.84rem;color:var(--muted)}
+.notice.err{color:var(--bad)}
+
+/* 社員 */
+.staff{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.member{display:flex;gap:12px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:12px;padding:10px 14px}
+.member[aria-pressed="true"]{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c);background:var(--cs)}
+.member img{width:60px;height:60px;border-radius:50%;object-fit:cover;flex:none;box-shadow:0 0 0 2px var(--c)}
+.member b{font-family:var(--f-display);font-size:1.05rem;display:block}
+.member span{font-size:.8rem;color:var(--muted);display:block;line-height:1.45}
+.member.id{--c:var(--id);--cs:var(--id-soft)} .member.mm{--c:var(--mm);--cs:var(--mm-soft)}
+
+/* タブ */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line)}
+.tabs button{border:1px solid transparent;border-bottom:none;background:transparent;color:var(--muted);padding:.5em 1em;border-radius:8px 8px 0 0;font-weight:700}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--fg);margin-bottom:-1px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px;min-width:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:.3em .9em;font-size:.86rem}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+textarea{width:100%;font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;resize:vertical}
+#exSrc{min-height:170px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.row .l{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.recdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--rec);margin-right:6px;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+
+/* 会話モード */
+.talk{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.talk{grid-template-columns:1fr}}
+.side{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px;min-width:0}
+.side.jp{background:var(--jp);border-color:var(--jp-line)}
+.side.fg{background:var(--cs)}
+.side.fg.id{--cs:var(--id-soft)} .side.fg.mm{--cs:var(--mm-soft)}
+.side textarea{min-height:70px}
+.side .mic{font-size:1rem;padding:.7em 1em}
+.big{font-size:1.5rem;line-height:1.6;padding:16px;border-radius:10px;background:var(--surface);border:2px solid var(--accent);white-space:pre-wrap;word-break:break-word}
+.big.my{font-family:var(--f-my);line-height:2.1}
+.toggle{display:inline-flex;align-items:center;gap:6px;font-size:.86rem}
+
+/* 結果 */
+.log{display:grid;gap:12px}
+.entry{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.entry .head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;padding:6px 12px;background:var(--sunk);font-size:.76rem;color:var(--muted)}
+.entry .src{padding:10px 12px;font-size:.9rem;color:var(--muted);white-space:pre-wrap;word-break:break-word;border-bottom:1px dashed var(--line)}
+.entry .out{padding:12px;font-size:1.08rem;white-space:pre-wrap;word-break:break-word}
+.my{font-family:var(--f-my);line-height:2}
+.entry .back{padding:8px 12px;font-size:.86rem;background:var(--jp);border-top:1px solid var(--jp-line);white-space:pre-wrap}
+.entry .notes{padding:8px 12px;font-size:.86rem;display:grid;gap:4px;border-top:1px solid var(--line)}
+.entry .notes div{border-left:3px solid var(--warn);padding-left:8px}
+.entry .acts{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-top:1px solid var(--line)}
+.tag{display:inline-block;border-radius:999px;padding:0 .6em;font-weight:700;font-size:.72rem}
+.tag.id{background:var(--id-soft);color:var(--id)} .tag.mm{background:var(--mm-soft);color:var(--mm)}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:16px;color:var(--muted);font-size:.9rem;display:grid;gap:4px}
+
+/* 会話練習 */
+.lesson{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center}
+.lesson img{width:96px;height:96px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--c)}
+.lesson.id{--c:var(--id)} .lesson.mm{--c:var(--mm)}
+.golink{display:inline-block;text-decoration:none;text-align:center;border-radius:10px;padding:.8em 1.2em;background:var(--accent);color:var(--accent-fg);font-weight:700}
+.golink small{display:block;font-weight:400;font-size:.75rem;opacity:.9}
+ul.tips{margin:0;padding-left:1.2em;font-size:.88rem;display:grid;gap:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <button type="button" class="btn quiet back" id="ai-back" hidden>← AI社員一覧へ</button>
+  <header class="top">
+    <div>
+      <h1>FLYYOU通訳デスク</h1>
+      <p class="muted small">登録支援機関部の通訳担当AI社員が、日本語とインドネシア語・ミャンマー語を通訳します。長い説明をまとめて訳す「説明モード」と、交互に話す「会話モード」、語学の「会話練習」があります。</p>
+    </div>
+    <button class="btn quiet" id="btnClear" type="button">履歴を消す</button>
+  </header>
+
+  <div class="notice err" id="unavail" hidden>この画面では通訳社員と接続できません。claude.ai にサインインした状態で開いてください。</div>
+
+  <section class="staff" id="staff" aria-label="通訳担当"></section>
+
+  <div class="tabs" role="tablist" id="tabs">
+    <button type="button" role="tab" data-tab="ex">説明モード</button>
+    <button type="button" role="tab" data-tab="talk">会話モード</button>
+    <button type="button" role="tab" data-tab="lesson">会話練習</button>
+  </div>
+
+  <!-- 説明モード -->
+  <section class="card" id="pEx" role="tabpanel">
+    <div class="row">
+      <h2>説明モード：話し終わってから、まとめて通訳</h2>
+      <div class="seg" id="exDir"></div>
+    </div>
+    <p class="muted small">雇用条件や生活ルールの説明など、長い話を最後まで話してから、まとめて訳します。「話しはじめる」を押して話し、終わったら「話し終わった・通訳する」を押してください。キーボードで入力・貼り付けもできます。</p>
+    <div>
+      <p class="label">場面</p>
+      <div class="seg" id="segScene"></div>
+    </div>
+    <label class="label" for="exSrc" id="exLabel">日本語の説明</label>
+    <textarea id="exSrc"></textarea>
+    <div class="row">
+      <div class="l">
+        <button class="btn ghost" id="exMic" type="button">🎙 話しはじめる</button>
+        <button class="btn" id="exGo" type="button">話し終わった・通訳する</button>
+        <button class="btn quiet" id="exStop" type="button" hidden>止める</button>
+      </div>
+      <span class="muted small" id="exStatus"></span>
+    </div>
+  </section>
+
+  <!-- 会話モード -->
+  <section class="card" id="pTalk" role="tabpanel" hidden>
+    <div class="row">
+      <h2>会話モード：ひと言ずつ交互に通訳</h2>
+      <label class="toggle"><input type="checkbox" id="autoSpeak" checked> 訳をすぐ読み上げる</label>
+    </div>
+    <p class="muted small">話す人の側のボタンを押して話すと、話し終わったところで自動で訳します。訳は大きく表示されるので、相手に画面を見せることもできます。</p>
+    <div class="talk">
+      <div class="side jp">
+        <b>🇯🇵 日本語</b>
+        <textarea id="tJa" placeholder="日本語で話すか、入力してください"></textarea>
+        <div class="l row"><button class="btn mic" id="tJaMic" type="button">🎙 日本語で話す</button><button class="btn quiet" id="tJaGo" type="button">訳す</button></div>
+      </div>
+      <div class="side fg" id="tFgBox">
+        <b id="tFgTitle"></b>
+        <textarea id="tFg"></textarea>
+        <div class="l row"><button class="btn mic" id="tFgMic" type="button"></button><button class="btn quiet" id="tFgGo" type="button">訳す</button></div>
+      </div>
+    </div>
+    <div class="big" id="bigOut" hidden></div>
+    <p class="muted small" id="talkStatus" aria-live="polite"></p>
+  </section>
+
+  <!-- 会話練習 -->
+  <section class="card" id="pLesson" role="tabpanel" hidden>
+    <h2>会話練習：通訳社員が先生になります</h2>
+    <p class="muted small">マハデブ先生のネパール語レッスンと同じ形で、場面（あいさつ・食堂・買い物・面接・職場の説明など）とレベルを選んで、音声で会話します。わからないときは日本語で「今なんて言ったんですか？」と聞けば、日本語で説明してくれます。「フリートーク」と言えば自由に会話できます。最後に「終わり」と言うと点数と講評をもらえます。</p>
+    <div class="lesson" id="lessonCard"></div>
+    <ul class="tips muted">
+      <li>新しいタブで開きます。マイクの使用を許可してください。</li>
+      <li>練習では、本物の申請人の氏名・在留カード番号などは話さず、架空の内容を使ってください。</li>
+      <li>1回の練習は最長10分です。</li>
+    </ul>
+  </section>
+
+  <p class="notice">氏名・在留カード番号・旅券番号などの個人情報は、通訳に必要な場合だけ入力してください。履歴はこのページを開いている間だけ残り、閉じると消えます。AIの通訳は下書きです。雇用条件や金額など重要な内容は、逆翻訳と「確認してほしい点」を見て、必要に応じて人の通訳者に確認してください。</p>
+  <p class="muted small" id="note" aria-live="polite"></p>
+
+  <section class="log" id="log" aria-label="通訳の履歴"></section>
+</div>
+
+<script>
+(() => {
+const STAFF = {
+  id: {
+    key:"id", app:"raka", name:"ラカ・プラタマ", img:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCADAAMADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDoL+G00yyiigJDMMBTyTVa00yORo3mcjJ5ycVP4ctYLa5e41CfzZAPl8w5Aql4m1S2u70xWZ+RRyV6Zr52pTpTisQlp2ONHXvG1lBu03DyAcY71K2qX6QhrmUxuBkg1znhDVzbq4vHJXGEJrM8UarNqV8VtGby14OO9dbqxlSvF2v0KuereF2mvVWaW5B9q6+EpsChwTXznpPifVdPmW0VyecDPUV6Vot7rjWq3GPMGMkV1YXFRS5Em31KUj0uyH+lofeuoX/VD6V5/wCE9Skup0WZCrZ71rfEfxpp3gvw2+o3rKZWUi3h3gNK47DP4eteinzpNFplXx/rOlaLaifVL6K2VztQMcs59FUcsfYCvF/EfxgttMuHhtPD+oS4GRJcusC49SOWH4gGvOvFfxC13WNVubi6uAk8pPNuPnijPRN5+6P9kY9ec15x4g1qyktBDtnDKxPzMGznuT3rRwtuNI7vxh8ZtW1CV4RcLAg+7HbSOo/4EwwW/T6Vxlx478TTIyR6tdxQSDDBJ3C/z4rh557PcX2KrDuUFVJtSnicNE0boP7hxx9KzbLSO/0rxpr1jIUstXuIJwMbCwIYd+SK9I+GnxSvnvFivLm5trtD88YYtFcp1Y7TwrjqOx6cV863N4rrHPAxVh/D6Vfh1VyYZg2GwMn2/wD10KTQNJn6F6BcNrEAeMqWABJX7rKRlWHsR/UVtDQpyM/JXzx8EvjLoWk6HCms3n75YBHgfMcK5wcduvHtXreg/HPwXqkywRXEyuemUzn8u/HSui3Y5mnfU6o6BOf7lRnw7cdlT863rDVYb62FxaDzojxuU559KsfaW/54PRr2Fp3OXPhy47on51E/h24HSNfzrrvtJ/54v+VIs5dseU4+oou+wWXc4XUNHnt4i7R4AHY5qPS9Bu7yMSrH8vYk4ruNaiVrJzt/hqbw6Y20+MhcHHSk3aPMNK7scU2hzo20xvn2pRolzniKSvRDGhbJApfLT0FQ6q7F+zfc+HYtea7gbzXwTVzwlc273jo+D6Z6Vw2tkwXPk2579q2PD072MYeVck8818hRpRpSunoQl1O31i5CTiGELk+lbHgTTGub/wAuaM4bnJFcotx5mLkrkAg123gnXbaHUo0J2mTGAexrsjCFWom9ATOl1X4dw3N3FcRqUPBJHeu90bTVtLFYGUEBcVdsLiGe2RgwPFWOMZHI9q9unQp023FbmiilqY+sX+neGdPl1e7ZYo4gSMnGTj/P4V8r/Enx3d+ItWfVru4AZ2KWkZBd1X0RBwPp19TXY/tHeJBe62lol2txplimPIjcAPMfvM5zgheBivAxqjXF67aaQCx2y3JH3B3VSf6V1xjyoFqN1/W5LHdFHFuuG5cyYYr7cYA/U1ykurXcz/vVB558th/Kp9bk+1amYLNDIM7UB5ye5PrXeeBfhpLdrHc3i7yedvQCuWtWUN2dVGjKppE88Aubk7Ui3Z6HBBra0vwLqV+qyNAyqx9MV77pfw8sogkklqoweBt4/GurttAt4YFjjhUAdgOlefUxr+yj0aeAW8mfMdz8OdRj+7E+B174rPvPB97bQlzHI390Yxmvq9tAiKEMfl/u4rJ1Tw7aPCUZPk9BWccZPqaSwMOh8r6cEsZNs3yHPJJxk+9btvNc28iT2Fy0TA7l2HGD612Pj7wSoMr2ybZBll2jqPpXmAN1azvDMTgdVJ5/CvRo1lUWh5lai6T1Pp/9n74sw2+pWuk63OLe4kYQxzO+FfP3Uk7Fc8BjypPpkV9a2zxXECyopAYdD1B7g1+XNrcPbSxSB2YEho5B2I6Z96+9/wBl7xjL4v8AhrFJeyiTULGT7NctnJbAyrH3K4/KuiUuZa7nLyqL0PVNi+lJsX0p9FZ3KsihrSj7BJ/umoPDX/IPSrOsDNlJ/umq/hviwUVsv4Zk/wCIaZopaQ1kanwHf6TNBrUiSxkHfxn0r0K38CJdaIs7SsHK7hjpUWswrq2oedbRFkHBKivQfDkTLoH2eR8hE6nrXg4aMKlWcLXS2Mknaxm6foGnxaGIdiMVTnuSa5uWxSNgYgVdDxgc11ekTw2l49tLKWJG4A96p389pPqzKq7MDkYxSx8ZqkpU+nQR0/g27vZrRYy/Qdc1J8QfEF5onhS8cyLBK8ZSOVydqHHU4/AAepFQ+DbOdbrfE58o84rG/ahNtB8OopLxWZBdJlFH3uD1Pp1/OvVwE51KUZT0Y0j5y8VXYuYo5z/p7bSGmYAbjnJyK4rVLmdBkrsYjbGgP64HStrWLyZwjJE8bsMKinO0dsnpUvgTwjqPifXlgRWbnhmPyr7n1r0as9DWnBt2N34M+BX1zVhfzRHyVPAx6V9P6V4Zs9PsERUUEDnineAvCdn4Z0K3s4VzKiAO56sfWuke2kkj4XGO9eRNczbkezTaglFGAYUB2Bc4qpMhViQoxW1dWuzBByfaqqW4YgOM1ySR2RZiysSMDv7VSdPmJbP4itnVbzT9Ngaa7nhgjX+JzivP9X+JPhiORoYJjO4OAdpAP41MaM3shTqwjuzQ1i1gueGjVsjGcV8+fFDQTperNNswjkkccV7VF4ljnQy/ZX2dQyckfUVX8S6Np/i3QXXgvtPltjDK3uK1oylRldmFaMa0LLc+abOcp5kOMIpDofQelfXX7B1rdJaeJ7omT7K8kEa5bgsAW6euG6/Wvk7VdPm029mtbhCssEhRxjr6Gvr/APYYt3g8Ea5fHftnvkjALcfInp2+9j8q9mHvLQ8Kp7ujPpPPvTSwqi10fQ1A905bgVapNmbqotasc2cmP7pql4alU2m3PINTXrFrRs/3a5nw/dyQzSJ1G44rSELwaIcveudyCO1FZ+n3LTE57VckkCjJNYSg07GqkmrngHw1023e2aMoCU65FVPFFxPp+pmC2kCqeorubazttAtiWwpY15jqd4NS+IKoWAtlODXFWpezpKC0exDlqxNHuR/bOb9W+b7rMMCtHVbWDUL+KO0I8xeuzuK6PXdN0ye2iji2GQ9MVW0PQmstajmUHBHJrD2dSD9m1dPqTY3vBVvPYhYZhkds0741eG28UfDTWdKgjLXJtzNbgDJMqfMo/HGPxrpltFUpIoxxVn7RECFY4NepCKirFrQ/OLULC/t9RmmnjZGaIZjbIKt3GK98/ZitzO09ztQpHjLYxzWL+0b4cOkePppo8C11D9/Hxxkk7h+B/nXd/st2SReBLhwMy/a2D5HT0qa91HQ68NZyuz1DV9bstKjUzMrStykYPOPWvPfE/wAYJ7eZrTR9GkuphwST8g/Guj1G0tYZbi71KU7Y8vLLJwB7V574y8f+H9KheK3gHmf888Zftyw4C9RwTnnpXJKSWkVdnaot6ydkbGgePtc1FwdT0+O1yf4Oa61tWeePevQjqK8Qt/EUuoR28/2LyY7onyXPykkMVI4JHUV7D4GXzdCljnhDSxjOa45uTeqsdtNRS0dzjfGiJqVwYbtmkQngZxWRaL4T0eMTXUdsdhx5r7dqn03Mev0rW8W20n9qSFw3zKfL7DOOM47Vxd/4dsrm2hgvHu1kUkyTRRsvmA4+XvhQQMYpUnzfEx1Y8vwq7Out/E+gXr7LdoygH343VwPrtOR+Va+npZlmktypZv7p4NcXB4S0q6gt4ILK6uBDnY7gptyck54J5Ndho2h/2dAFjjdeP4mJ/nUTaT0YRi2veR458btK+y+L2uCAq3dusi/UcGvpP9jv7FbfCOC0+0wC+uLma4aEP8+04CnH0FeVfF3Ro7+HQ76XO2G9SCbHPySED+Y/WuusUPh/UdH1Syyi2TIQiggbM4Yfka7oYr2UYqxwPA+3nLW3Y+iiDTlty/OaVWV41dOVYBh9DyKt25+UcV6zm0tDxVHXUr3qbbRvpXIaQD9qlx/eNdnqX/Hq/wBK5bQgvnyeu41VKWlxTWtje0cEFsir12Pk6VBp4Ac4q+6hhWU5e/cuK92x4n8Wb54GtU3bUdwCa891i2hhK3cLbJd2c+tdp40sbnxSIo1YLGrA5HXiuR8Q6NKltFCkh3BgvPWuLEx5m5WuuhgndlnTLx1v7aaaZiq4HXivXNImtblUPGeK4jT/AA/bppURb52RATWj4bnaO68tWJUHgelTSUqTtLqbRdj0O4kSCAsxwAK838Ua9drqCiyG9VPzV2GrXKTWZi8za231rzu6kttPZvPkG5mJBJ61vVlZCmzkfigl14z0h4ILOSS/sf3qBVzle4PtVj9mW4aOPVtNbOdqT4J6HJU/0q9De3cjSSabPJak3cYkMZx5i7Wwp9RkdK6Gw0r+w/ibbyQxRw2+o6dJGSgA3SIVckj1wf0rnp13O8H0PSoYZxoxrX3v/kReONDudY/cz3ctta7t7GDmRj2wTwMetcLqPhTSLeyj0+x8OzXKROzqZpA3zN1YluST3Ne921ss+QEB9SayNW063hffsXd16Vzz5oq8dj0qXLJ2Z5H4e8DXks6T3DJaQr92GIY4+vevVfDunRWWnvEqcspLEjp6VnR3q/2lDZxKrNIwGW/hHrW1PqdjpiNZyXMc80v8IYA8eg71FO0ldmtS60OL8S2w84u8YZM4z6VU063jvF2bI3YHGQeas+KvEmmWduXnWSRGbHlxIZJGPoFHJrKh1ew1OSGbTIpoHBxIrpsYD3981zOFnc6U7qx1mnaTFCdxHzds80upW3XGMY4qpY6w0eILohWP3Sf4vxp2oagpTcDnim1GxDucp4ws/tug3Vp824lWUjsQwOf0ptjLNd50i4k3yRPGC27ORvA6+4rQmY3iSA8BlIFW/Buh/atZ0u1iBQGZWuJGHzS7eck/n+lUve5YkRkqfNJnv9tCq7YgPlQBR9BxV1UAGKqxNgk+9OlvoosBmAzXvyTbsj5eLSV2N1QYtm+lcnosbG5kYHA3GupvJBLbMR3FcTFqsdpcSozAFWPWtKb5UZzavc6y3mWDcXamjWoBcCHeC3WvPtb8TE4EBOWNV/CNzPqGrsjuWY859BQ3GTMvavZEXiWcaHp4kjUtg4GK4OOXUrsSXdyjAbiVU9hVjUPEU+qXq29wu2ONs4PeuqggiuNKJQAFxXmOftm1B6IuMdbmT4U1eZ5HhucBenJ61f1fVLLTZt0bBSRyRVGy0V3kO1iDnqKNb0QSR7JeW6ZNEZVFFJo3tZM5nV/G12uoHaxeDpWDr/iBr6aNpQyxg8ZrX8TaLBZQCQdE5Y1z97pr39kRAuSehrnrqok02c61O28Iy291F5COm2XaVJPR1OVP58fjW/qReTx9bvM6q1qxlhBH3lZcED8Cfyrhfhnpd3FfGO5VkC8qTXtdjbwXlpMTIjMQFdXAwvfI9AaIRcoqolY9jL8TaDpS+Rat77yIGVsD8awNd1UeS7FsAAnNWNS2y2wlgcOpGdynr2Nch4rs7qfT5BA+7IBPuM8/pUVKj2PToxV7steHUS7eS7mHzM25PUDtWXqng7S59Zl1VIpJrs/N5kh3Mv0PasaTxJfaLetDb6Hf3wwSBbpuyQPr0q3DJ4t12PzZRaabAwysc0hXHsVH9TWtKC5dNRtynLsRT6GgieadniYH78jHpUduba2UbNQt1C9ctimTaFcqQLzW4gqgkiKMk59iTWbL4aiupGWCW6mTPMs0mB+QxmolG250ukkr3J7nXrR9RSweZZWkBIVHB47HHat6BZBpsbSsclT94dcHisvQfCWkaSrTQWsYmYktJj52PqT1rQu7t5bhYcbQgwfTFctRp7ERT6l20iw8CdC5A4969l0DwxpGjXHm2cUxlAKq00xcoO4Gen868g8LBtS8XafaAZQSh3x/dX5j/KvbRcgPkmu7BOMVdo8XM6zjNQT6amrAoJwTT5bSOQDcoOKyl1KNJlXcOTitlJkMW/cOlelzt6xPNg4yVipfCOG3YEgcVwsulw3kztkNubNcX8efipceH9UTRNMtjcXcsZb72FQZxk0z4LeJdS163lF5GyTQYDjtk1qnFPlb1IlCUo8yWhoeILRbZZ02f6scYrd+D9ustu9zIuHLEc1meOYpI50BLEzg8V0vwsiIsySu0ZwKzvabRhCPvI811rRIIpo5lHJbnA60R6sbf/RQuAo4xXYeGbGPUbLzZuTuPWmQ+E7Z9VmnwDkce1Yexa96HU3lfmsjltI1qSK6SKQHJfj6Vv8AiCOSSy86EZY8iuY8WJHpXiK2QYVC1d3D5VxpSFcNgVCT1i+hstUzy3XBNc2rJcAhVPzCrPhGOzULC20g9K6seH1u2m8xchiTiuI8R2zaLqSFW2DOAKzre4uZmEIuLuz0E2tnbp5sQXOK888X61fR3jQ2080KnglGxkelamjaxLdzx27Hjp9ab450wCxM8cZZgf4RVUKntfh2Nb63RY+HGsmSwl0m4cloyZIix5Kn7w/A8/jW5dzCFf3eCB2ryyyN5bXEcsKSJMhypxXYJezNZw3NxEY0lyCOysOo/rWWLote8j1sFXT9x7nR6LbwOTcNGpyc8dqu6mVkhKBUbHqOaz9CuoFG0spVuntXQtBbbFYsucfnXPC9tDubXNqee31pctKRHGNueRg1dtLJkiBlJPoD2rb1WVVceSFI7AHg1mX91FBhjKORyB0qJpmqmtyCeMxjP4mudvp1VnkJxzip9b8QRQwtuP7x+gPauSeea/k2hiIzyfU1jy9xc+uh6F8ILhT4tWbnMkUiA+2M/wBK9bu5yW2968V8CzjT9espAyJh9gLfd5BAz7c17D4T17TdbtXuYhslhle3uYJBh4JkOHjYeoI69CMEcGvTwceeOnQ+fzSm/ap90ch8RNfuNBtHvFRj5Y3AZ61xlh+0E9xp/kxaNeM+MFsjaPxruvjNDDf6NLbbAWkG0YHNeaaR4UgsNGDTQBNq+lelTg4I4KVPV3Mz5/EmryavqSgu/Qd1HpXQ+DfFmmeGr64t53SBJSCGJxnFctb3Q+3vBDwgzwK5Px1EVmVycgnpXNTpy9rzs9WrVj7DkR614q+Jmk3t9EkFyjogwWB71qeBPixomnStb3N4iKTncx4r5qBoODXVZc3Meb7M+wdKmuP7NZ7PGDnbVHQ9dvku5reaNmlUnOBxV3wVIljoEcE7+YwXOWq14MNld6pczYXJbBrn5ZS5GnYm93c8x+Jb3dzfxSSoY8N8tdZ4T1XydKRZjzgZzVr4wWdskcEsaD5ZBXN3URbS1EW4O2MYrGUHCq2b6qHMj0HSrn7TuMIHIri/G/hTUNXvUdSQFbPStvwncPptipuARtHJrqtK1K3vmyoDYrWdFVYWmZKcZ6XPIBol5pOoW+5SwLYJx0r1TT9IgudOBn2kbcnPauH+K3xJ8KeHZWgRl1K/jP8AqoCNiH/afp+Aya+Yvih8XfFnigvYSajJaaeTgWtsxRMe+OW/GtMNg/YJvox9dD6J8e+JPAfhvUcX+u2KOp5jibzG/Jc0/QfE2geL7KWx0y1vAhiMwM8Hl7lBAyB1HUdcV8ueHtPhuGgvb6MTGJQLeMnjP98jv7V7/wDs5SreeP5tGlf/AI+9GnRS3dw8b5z+H6V31MIpUJSfyHSrclWJfuIr7SpMwSGSLPAPakl8VXccWx8gDpzzXW3cEEyPhQzI7Ryr3V1OGUj1BFY02gW85IcAKfUdK+XcrOzR9Jy3V0cpN4rufNC7XwO2P61nX2t3d026JMAnoTn9K6a+8LWnmYjxn0qkujJBId+AorOU7dDSNO/U5mK1urubzJtzE9M9vwrotH01YU3uvzep61cWJUACqPY1djh+UFuOKxlJs0jFIydbvPsGk3N2nytDEzr9R0rH+Mutar4K+MEmp6XeSQPq2nW16yA/I8m0o25ehB2VJ408y/ls9Ct8+Zf3cUHHozgH9M0n7ZttHbeLfDUqfe/s6SInHZZAR/6FXq5VfU8rNLXR0fg/4ueFfEEKnxI7aVexfeQhpIn91IBI+h/Wu2v9d8J6vpJTR9c067Zl4SKdd3/fJwf0r4taZo33oSD14qdr+5OJBK2/ue/1r11Titjy7s9a1NL+w8SSFYisZPBrF8V3JuNu48g1x1h4p1a0xGL2V4/7kh3L+RrXj1ux1Qql2GtmPWRPmX8jzUxpyXUcmmtCHtSZrTfS0dA9leRXQPQKcE/geali8MaxLGZFspdo9RSl7u5K1PpTwVDNdtcR3blRGdijNPgjltPGMcFhNhQP3qjvV1LFtJa7vNSlS0t4su8pOABXm2q/EfTdL1ybUtBJ1ByoVzOpVVb6dayoYec4pRWz3OfY9D+JEEz2sYkJIZ1H61S1HWPDOiadF/aep20UoUfuw25z/wABGTXi3i34k+I9fcm7v2ji/hihARR+X+NcZJfb5C8rFyepNd8cAubmkzT2rtZI931X4o6LNB9j0vTrq4Yj/WSkRp/U15340+JWptZy6dYTfY4X4kEDEFvYnriuFvtbdITDD8ing461zd7M7ZZmY5rp5KcFotTJU05czIta1F5iSzE/jWFYWpvb8Bido5b6VLfPkkk1q6LaNBCGddssvJB6gdhXPb2kjf4UdDpq4wQMKOBzXd/BrW/7G+M3he7eTZFLdfZZM9NsqlP5sK4a2HlxgucAVSvbyaC8gvYWKPbyLLHjg5Uhh+oFd01+7aZgviPsH4wWcvhXxTH4kgiL6XqjrFfqvSKcDCyf8CGFPuB61RSaO5jV4XBDcjNepXEWneOPAEMkkYntNTsklHrh1DcHsRn8xXzyv9p+Gten8P6q7boG/dSdBLGfuuPqP1zXxuNpOEuddT6PAVueHI90dVeW7mMvsP1FZE8c0sm1hx781oW+pMsRUNwfWoZdQXOQgB9hXC3c70mis9t5RUtwf1qO8mCRnnHFSPK8rZfvWTrMhYFE696i12XcsfCnR28QfFO2u5EL2+lo1ySRxv8Aup+pJ/CuZ/bUulk8XaFCrDclrOSPYuoH8jXvPwS8Oto3hA6hcJtutRbz2yOQnRB+XP8AwKvlz9qnUhd/Fx7cEkWtlGp+rFm/qK+gwNLkikfP4yr7So7Hl33hikUndg9KEIJJ7U4LnpXpWOMY4BBU9RRbyMj4zgU6ZcqXDcqOc+lRYydw5osBrW1/Ig27vl9K6LQ/GGq6UhW0vZkRuqFtyn8DXHxHnBqbcAODViPsj9p7Vlg0ex063bCzyPNKAeoUAL+pP5V8sG7I1G7h3cMiuAPXof6V6T8RfEVx4i1KaWZ/kVdkK5ztUdPxPU15Hf5i1iLjlwyn+f8ASuyMHSpRT3OdNSk2i/LcZIz2461XkmwN2c1BI7DIPWo5mzH3qWy0hHJJyTVG7c4x0qwz4Trx61Un5HFZSZSKMib+h57EVq6NeXDTBLuF3I6SqOPxpmmRwta+bsUuHIYt7elW5GYJhcLn86UItahLUtSXMknJ/AelQ3S/uwT1pkPYjk0+5yYDz+Are90R1Ptn9lrWo7j4HabJczgR2AlgdmP3VRzx+A/pR8QNDsfHtr52lRiHVLcFrOWU7VkX+JGPYHqPQ/jXkn7H/iE3Pgzxh4TBBuLeT7dbg9SrABx+YX869l0JpLOWK5t+YZBuUdvce1eRiaSbcWtGddCbj7y3R5Yllqml3L6bqttNbXSDOxxwR6g9CPcVcghdjycV634gsLfxFpLxSRqt1ES1u5HzKfT6GvMJIpra5MF1DJDKOqOuDXg4jDOjLyZ72GxKrR80MW1CqW745NO8J+Hm17XkSdCtkn7y5k6bYxyfz6CtrRtNl1Wf7Laxl3I+Y9FQdyT2FdjLFBpuljStLAEROZZSMGZu5+npV4bD88rvZEYrEezXKt2bEWtaXcW8lrYyEPFGdsbJt4Axx7DivgP43aiNT+MXiG4Rsok4gU57RjZ/MGvr6W5j0x77WJmIttPs5pmOcbiFNfDmpia51OfVZv8Al6nfJ9X4Zv8A0IV7tGN05Hhz0aQ0EcHpUyuduCvbqKjAGM04KSeOK6EZspu0tzLhlaOFT0IwWPv7VaXnFSgv0OCKjuXKyRKABuJzx7VSjYVx4FS5GKj49eKduBFUB3Wq3DCZgDuweCetcpq8rfa7aQ8YlHX34rXu7km9KkYz8pFY3iFQkW5TnYwbP0Nd1d3jc56as7D587u/NU2k/eEdBVu5buT1FUD3PrXNLQ1RK+GAxVeUcYqVOTkdKJxkcDOBUPUYaeNsMq5x82R+I/8ArVZQZGDyap2OfPZckbk/katK3YZ61UdgZLnHC8USLmI49KYud2e30p0mfLJOfpWl9CbHW/BXXX8EePNL1za0lpqEUsVwo7qGMbj8AVb8K+0/DVgp00xSFXSQCSMjovHavj3TtH+2fAm012CMedpGuTJKR18qUJnPsGxX09+zt4hTX/hzaJJJuu9OJtJsnkgcox+qkD8DXNVipUlPs7GkXaVjtrWALNskUZ6fX3p2qaHZ6nAYLuMOuDtY9U9we1WGAZu4IPBqS+mbyVjQDcRlj6CuCVramybTujB0rS7fSNPFskh2Y+c9DKfU/wCHao51EhZiPvcAe1ac1sTbs5bPHftzTYrdVBdu1RGKtZFuTbu9zxD9pzVH0TwPBpVtIEm1eRopQByYhhm/XaPxrwTxr4ebS/hf4N1B0YPqE15OxPo2zb/46BXe/tF6lL4m+Kg0azbetkI7GJR/z1cgt+rAfhW1+1fo8WleDPB2nQBVS0MkQA9o1H9K9KMOWnFd9TmbvJs+cB1xTjvwChA9c0pTDU7YxHFCQCJu/ixVe5+a+jH91Sathf4c/jVcrm/I9IwP1NDQIl289cAUeuTS7ff8ajkYA7RVMRtXsiysWVhmq98PP06QDk7SKrXZKv5iEge1QpqB2vHtGWGD71vKS1uQkWi4ksLeUd4wfxxVRmO6n6ewfSyh5MUjJ+HUfzpgG08ispO9mUiWMipJGBXjioQ4B9acwGOuaaAiiJS6iPvt/PirJOHwc5NVLolV3Dhl5zVmXmQEdDyDSQFhGUADk0spHknHUVDg7eKk5MR+lWI9/wD2adOTxD8IvFOhTgbJ70x89t8IAP4EA/hVb9mnXp/D3xCbQ7xzGl+GtZUbjE6E7fxyGX8a0v2N33+H/E8GeRcwvj/gB/wrnfjRps/hT4tyanZKYhdNHqVuR035+Yf99qfzqMM1OU6T6lVNEpH1xI20lh0Ip4j81QTnnHP4Vl6FqcGteHrDVbcgx3cCyrjtuGcfgeK3IBmGPPoP5V5s10ZsmRzw4gZB7fzFZHii/g0fQLu+nICQQvK5PooJP8q3p+Y3/wB2vGv2n9c/s/wDc2Ub4lv5UtV9dpO5/wDx1cfjVUoc8lFdRN2Vzxr4GaXP4r+L8Op3g8zyZJdSuCf72flH/fTD8q7X9seIvpOlMAdsM+M/VT/hWr+yPohi0LVdfkT5ru4W2iJ/uRjLf+PN+lQ/tZReb4QM2M+XfQgfiHFd9aV66S6GUV7lz5MmU76liBCgmmzEiQjB4pY8k89qEtQJQMtx1qnHzezk9QQP0q8BtHPpWfC2ZJj6yH/CiXQETyHA602zsbzUJ5Es7eWcxxmWTYOEUdyewqBmmuJo7W1iea4lcJHGgyzsTgACvUINKfwd8Lr6efeL64uESbLEJJ/0zZc/Mo546Hd24rjxWJVJJLdnRQoOq2+iP//Z", lang:"インドネシア語", native:"Bahasa Indonesia", flag:"🇮🇩",
+    sr:"id-ID", tts:"id-ID", gender:"男性",
+    profile:"インドネシア語の通訳担当（男性・インドネシア出身の設定）",
+    agent:"https://elevenlabs.io/app/talk-to?agent_id=agent_5501m6tr83b2fc7tghr63ftnehq3",
+    persona:`あなたは株式会社FLYYOU（登録支援機関）の登録支援機関部に所属するAI社員「ラカ・プラタマ」（Raka Pratama）です。インドネシア出身の男性の通訳担当という設定です。
+日本語とインドネシア語の通訳をします。インドネシア語は標準的で丁寧な表現（Bahasa Indonesia baku）を基本にし、呼びかけは文脈に応じて Bapak／Ibu／Anda を使います。硬すぎる役所言葉は避け、特定技能外国人に伝わる平易さを優先します。`,
+    exFg:"Saya ingin menjelaskan masalah yang saya alami di asrama. ..."
+  },
+  mm: {
+    key:"mm", app:"sumyat", name:"スー・ミャット・ノー", img:"data:image/jpeg;base64,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", lang:"ミャンマー語", native:"မြန်မာဘာသာ", flag:"🇲🇲",
+    sr:"my-MM", tts:"my-MM", gender:"女性",
+    profile:"ミャンマー語（ビルマ語）の通訳担当（女性・ミャンマー出身の設定）",
+    agent:"https://elevenlabs.io/app/talk-to?agent_id=agent_9501m6tr83xbeqcvkk6faf8tmga8",
+    persona:`あなたは株式会社FLYYOU（登録支援機関）の登録支援機関部に所属するAI社員「スー・ミャット・ノー」（Su Myat Noe）です。ミャンマー出身の女性の通訳担当という設定です。
+日本語とミャンマー語（ビルマ語）の通訳をします。ミャンマー語は必ずUnicode（Zawgyiではない）の標準的なビルマ文字で書きます。丁寧な話し言葉を基本にし、女性の話し手として自然な文末（ရှင် など）を使い、特定技能外国人に伝わる平易な表現を優先します。入力がZawgyiと思われる場合や音声認識の誤りと思われる語がある場合は、注意点に書きます。`,
+    exFg:"အဆောင်မှာ ကြုံနေရတဲ့ ပြဿနာကို ရှင်းပြချင်ပါတယ်။ ..."
+  }
+};
+const SCENES = [
+  {id:"general",name:"一般",desc:"日常の連絡や会話"},
+  {id:"contract",name:"雇用条件の説明",desc:"賃金、労働時間、休日、控除など。正確さ最優先"},
+  {id:"life",name:"生活オリエンテーション",desc:"住居、ごみ出し、銀行、役所手続、交通ルールなど"},
+  {id:"interview",name:"面談・定期面談",desc:"受入れ機関・登録支援機関と本人の面談"},
+  {id:"work",name:"職場の指示・安全",desc:"作業手順、安全、注意事項"},
+  {id:"trouble",name:"相談・苦情",desc:"悩み、トラブル、体調不良など。気持ちに配慮"}
+];
+
+const $ = (id) => document.getElementById(id);
+const ss = (k) => { try { return sessionStorage.getItem(k); } catch { return null; } };
+const store = {
+  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+};
+const inHub = typeof window.__HUB !== "undefined";
+let first = store.get("desk_staff","id");
+const hubApp = ss("hub.app");
+if (hubApp === "raka") first = "id"; else if (hubApp === "sumyat") first = "mm";
+const S = {staff: STAFF[first] ? first : "id", tab: store.get("desk_tab","ex"), exDir:"ja2fg", scene: store.get("desk_scene","general"), busy:false, ctl:null, entries:[]};
+if (!["ex","talk","lesson"].includes(S.tab)) S.tab = "ex";
+
+let sample = null;
+window.claude?.use?.("sample").then(s => { sample = s; if(!s) $("unavail").hidden = false; }).catch(()=>{ $("unavail").hidden = false; });
+
+/* ---- AI社員一覧へ戻る（FLYYOU総合の中で開いたときだけ） ---- */
+(function(){
+  const b = $("ai-back"); if (!inHub) return; b.hidden = false;
+  let fromOrg = ss("hub.from") === "org";
+  if (fromOrg){ b.textContent = "← 組織図に戻る"; b.onclick = () => { try{ sessionStorage.removeItem("hub.from"); sessionStorage.setItem("hub.app","org"); sessionStorage.removeItem("hub.goto"); }catch{} location.reload(); }; return; }
+  b.onclick = () => { try{ sessionStorage.removeItem("hub.from"); }catch{} const h = window.__HUB; if (h && h.toMenu) h.toMenu(); else { try{ sessionStorage.setItem("hub.view","ai"); sessionStorage.removeItem("hub.app"); }catch{} location.reload(); } };
+})();
+
+/* ---- 表示 ---- */
+function render(){
+  const st = STAFF[S.staff];
+  const g = $("staff"); g.textContent = "";
+  Object.values(STAFF).forEach(m => {
+    const b = document.createElement("button"); b.type="button";
+    b.className = "member " + m.key; b.setAttribute("aria-pressed", String(S.staff===m.key));
+    b.innerHTML = `<img alt=""><div><b></b><span></span><span></span></div>`;
+    b.querySelector("img").src = m.img;
+    b.querySelector("b").textContent = m.name;
+    const sp = b.querySelectorAll("span"); sp[0].textContent = `${m.flag} ${m.lang}（${m.native}）⇄ 日本語`; sp[1].textContent = m.profile;
+    b.onclick = () => { stopRec(); S.staff = m.key; store.set("desk_staff", m.key); render(); };
+    g.appendChild(b);
+  });
+  document.querySelectorAll("#tabs button").forEach(b => {
+    const on = b.dataset.tab === S.tab; b.setAttribute("aria-selected", String(on));
+    b.onclick = () => { stopRec(); S.tab = b.dataset.tab; store.set("desk_tab", S.tab); render(); };
+  });
+  $("pEx").hidden = S.tab!=="ex"; $("pTalk").hidden = S.tab!=="talk"; $("pLesson").hidden = S.tab!=="lesson";
+
+  // 説明モード
+  const d = $("exDir"); d.textContent = "";
+  [["ja2fg",`日本語 → ${st.lang}`],["fg2ja",`${st.lang} → 日本語`]].forEach(([id,label]) => {
+    const b = document.createElement("button"); b.type="button"; b.textContent = label;
+    b.setAttribute("aria-pressed", String(S.exDir===id));
+    b.onclick = () => { stopRec(); S.exDir = id; render(); };
+    d.appendChild(b);
+  });
+  const sc = $("segScene"); sc.textContent = "";
+  SCENES.forEach(it => {
+    const b = document.createElement("button"); b.type="button"; b.textContent = it.name; b.title = it.desc;
+    b.setAttribute("aria-pressed", String(S.scene===it.id));
+    b.onclick = () => { S.scene = it.id; store.set("desk_scene", it.id); render(); };
+    sc.appendChild(b);
+  });
+  $("exLabel").textContent = S.exDir==="ja2fg" ? "日本語の説明" : `${st.lang}の話`;
+  $("exSrc").placeholder = S.exDir==="ja2fg"
+    ? "例：来月から夜勤のシフトが始まります。夜勤は22時から翌朝6時までで、途中に1時間の休憩があります。夜勤手当は1回につき3,000円で、毎月25日の給料と一緒に支払います。体調が悪いときは、必ず前の日までに班長に連絡してください。"
+    : "例：" + st.exFg;
+  $("exSrc").classList.toggle("my", S.exDir==="fg2ja" && S.staff==="mm");
+  $("exGo").disabled = S.busy; $("exStop").hidden = !S.busy;
+
+  // 会話モード
+  $("tFgBox").className = "side fg " + st.key;
+  $("tFgTitle").textContent = `${st.flag} ${st.lang}（${st.native}）`;
+  $("tFg").placeholder = `${st.lang}で話すか、入力してください`;
+  $("tFg").classList.toggle("my", S.staff==="mm");
+  if (!rec || rec.target!=="tFg") $("tFgMic").textContent = `🎙 ${st.lang}で話す`;
+  [$("tJaGo"),$("tFgGo")].forEach(b => b.disabled = S.busy);
+
+  // 会話練習
+  const lc = $("lessonCard"); lc.className = "lesson " + st.key; lc.textContent = "";
+  const img = document.createElement("img"); img.alt = ""; img.src = st.img;
+  const box = document.createElement("div"); box.style.display="grid"; box.style.gap="8px";
+  const h = document.createElement("h3"); h.textContent = `${st.name}先生の${st.lang}会話レッスン`;
+  const a = document.createElement("a"); a.className = "golink"; a.href = st.agent; a.target = "_blank"; a.rel = "noopener noreferrer";
+  a.innerHTML = `🎙️ <span></span><small>音声会話（新しいタブで開きます）</small>`;
+  a.querySelector("span").textContent = `${st.lang}で話す`;
+  box.append(h, a); lc.append(img, box);
+
+  renderLog();
+}
+
+function renderLog(){
+  const el = $("log"); el.textContent = "";
+  if (!S.entries.length){
+    const e = document.createElement("div"); e.className = "empty";
+    e.innerHTML = `<b>通訳の履歴はここに表示されます</b><span>訳文のほかに、意味が正しく伝わるかを確かめる逆翻訳と、確認してほしい点が付きます。</span>`;
+    el.appendChild(e); return;
+  }
+  S.entries.slice().reverse().forEach(en => el.appendChild(entryEl(en)));
+}
+
+function entryEl(en){
+  const st = STAFF[en.staff];
+  const toFg = en.dir==="ja2fg";
+  const wrap = document.createElement("article"); wrap.className = "entry";
+  const head = document.createElement("div"); head.className = "head";
+  const a = document.createElement("span");
+  const tag = document.createElement("span"); tag.className = "tag " + st.key; tag.textContent = st.name;
+  a.append(tag, document.createTextNode(`　${en.mode==="ex"?"説明モード":"会話モード"}／${toFg ? "日本語 → "+st.lang : st.lang+" → 日本語"}${en.mode==="ex" ? "／"+SCENES.find(s=>s.id===en.scene).name : ""}`));
+  const t = document.createElement("span"); t.textContent = en.time;
+  head.append(a,t); wrap.appendChild(head);
+  const src = document.createElement("div"); src.className = "src" + (!toFg && st.key==="mm" ? " my":""); src.textContent = en.src; wrap.appendChild(src);
+  const out = document.createElement("div"); out.className = "out" + (toFg && st.key==="mm" ? " my":""); out.textContent = en.out || "…"; wrap.appendChild(out);
+  if (en.back){ const b = document.createElement("div"); b.className = "back"; b.textContent = (toFg ? "逆翻訳（訳文を日本語に戻すと）：" : "直訳に近い意味：") + en.back; wrap.appendChild(b); }
+  if ((en.notes && en.notes.length) || en.err){
+    const n = document.createElement("div"); n.className = "notes";
+    if (en.notes && en.notes.length){ const h = document.createElement("span"); h.className = "label"; h.textContent = "確認してほしい点"; n.appendChild(h); en.notes.forEach(x => { const d = document.createElement("div"); d.textContent = x; n.appendChild(d); }); }
+    if (en.err){ const d = document.createElement("div"); d.style.borderColor = "var(--bad)"; d.textContent = en.err; n.appendChild(d); }
+    wrap.appendChild(n);
+  }
+  if (en.out && !en.err){
+    const acts = document.createElement("div"); acts.className = "acts";
+    const c = document.createElement("button"); c.type="button"; c.className="btn quiet"; c.textContent = "訳文をコピー";
+    c.onclick = async () => {
+      try{ await navigator.clipboard.writeText(en.out); c.textContent = "コピーしました"; }
+      catch{ const r = document.createRange(); r.selectNodeContents(out); const s = getSelection(); s.removeAllRanges(); s.addRange(r); c.textContent = "選択しました。コピーしてください"; }
+      setTimeout(()=>{ c.textContent = "訳文をコピー"; }, 2500);
+    };
+    const v = document.createElement("button"); v.type="button"; v.className="btn quiet"; v.textContent = "読み上げ";
+    v.onclick = () => speak(en.out, toFg ? st.tts : "ja-JP");
+    const big = document.createElement("button"); big.type="button"; big.className="btn quiet"; big.textContent = "大きく表示";
+    big.onclick = () => showBig(en.out, toFg && st.key==="mm");
+    acts.append(c, v, big); wrap.appendChild(acts);
+  }
+  return wrap;
+}
+function showBig(text, my){
+  if (S.tab!=="talk"){ S.tab = "talk"; render(); }
+  const b = $("bigOut"); b.hidden = false; b.textContent = text; b.classList.toggle("my", !!my);
+  b.scrollIntoView({block:"nearest"});
+}
+
+/* ---- 読み上げ ---- */
+function speak(text, lang){
+  try{
+    speechSynthesis.cancel();
+    const vs = speechSynthesis.getVoices();
+    const voice = vs.find(v => v.lang && v.lang.replace("_","-").toLowerCase().startsWith(lang.slice(0,2).toLowerCase()));
+    if (!voice && lang!=="ja-JP"){ $("note").textContent = `この端末には${lang==="my-MM"?"ミャンマー語":"インドネシア語"}の読み上げ音声が入っていないため、読み上げできない場合があります。「大きく表示」で相手に画面を見せてください。`; }
+    const u = new SpeechSynthesisUtterance(text); u.lang = lang; if (voice) u.voice = voice; u.rate = 0.95;
+    speechSynthesis.speak(u);
+  }catch{ $("note").textContent = "この端末では読み上げを使えません。"; }
+}
+
+/* ---- 音声入力 ---- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+function stopRec(){ if (rec){ rec.keep = false; try{ rec.r.stop(); }catch{} } }
+function micLabel(id){ const st = STAFF[S.staff]; return id==="exSrc" ? "🎙 話しはじめる" : id==="tJa" ? "🎙 日本語で話す" : `🎙 ${st.lang}で話す`; }
+function startRec(targetId, btn, lang, continuous, onDone){
+  if (rec){ const same = rec.target===targetId; stopRec(); if (same) return; }
+  if (!SR){ $(targetId).focus(); $("note").textContent = "このブラウザは音声入力に対応していません。キーボードのマイク（音声入力）を使うか、文字で入力してください。"; return; }
+  const ta = $(targetId);
+  const base = continuous && ta.value.trim() ? ta.value.trim() + "\n" : "";
+  let finals = "";
+  const r = new SR(); r.lang = lang; r.interimResults = true; r.continuous = continuous;
+  rec = {r, target: targetId, keep: continuous};
+  btn.classList.add("rec"); btn.innerHTML = `<span class="recdot"></span>聞いています…（押すと止まる）`;
+  r.onresult = e => {
+    let interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++){
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finals += t + (lang.startsWith("ja") ? "" : " "); else interim += t;
+    }
+    ta.value = base + finals + interim;
+  };
+  r.onerror = ev => { if (ev.error==="not-allowed" || ev.error==="service-not-allowed"){ rec && (rec.keep = false); $("note").textContent = "マイクが使えません。ブラウザのマイク許可を確認するか、キーボードの音声入力・文字入力を使ってください。"; } else if (ev.error==="language-not-supported"){ rec && (rec.keep = false); $("note").textContent = "このブラウザはこの言語の音声入力に対応していません。文字で入力してください。"; } };
+  r.onend = () => {
+    if (rec && rec.r===r && rec.keep){ try{ r.start(); return; }catch{} }
+    if (rec && rec.r===r) rec = null;
+    btn.classList.remove("rec"); btn.textContent = micLabel(targetId);
+    ta.value = (base + finals).trim() || ta.value.trim();
+    if (onDone) onDone();
+  };
+  try{ r.start(); }catch{ rec = null; btn.classList.remove("rec"); btn.textContent = micLabel(targetId); }
+}
+
+/* ---- 通訳（Claude） ---- */
+function errText(e){
+  const c = e && e.code;
+  if (c==="not_granted") return "通訳社員の利用が許可されていません。画面の許可設定を確認してください。";
+  if (c==="rate_limited") return "利用が集中しています。少し待ってからもう一度お試しください。";
+  if (c==="cancelled" || (e && e.name==="AbortError")) return "通訳を止めました。";
+  return "通訳結果を受け取れませんでした。もう一度お試しください。";
+}
+function buildPrompt(st, mode, dir, scene, text, history){
+  const from = dir==="ja2fg" ? "日本語" : st.lang, to = dir==="ja2fg" ? st.lang : "日本語";
+  const sc = SCENES.find(s=>s.id===scene);
+  const modeRule = mode==="ex"
+    ? `- モード：説明モード。話し手が長い説明を最後まで話し終えた内容を、まとめて通訳する。音声認識で入力されたため、句読点の欠け・言い直し・「えー」などのつなぎ言葉・同音異義語の誤変換が含まれることがある。意味を変えずに整理し、聞き手が順を追って理解できるよう、内容のまとまりごとに改行して訳す。内容を省略・要約しない。
+- 場面：${sc.name}（${sc.desc}）`
+    : `- モード：会話モード。対面の会話を1発話ずつ通訳する。話し言葉として自然で短い訳にする。音声認識の誤りと思われる語は文脈から最も自然な意味で訳し、注意点に書く。${history ? `\n- 直前までの会話（文脈の参考。訳さない）：\n${history}` : ""}`;
+  return `${st.persona}
+
+# 今回の依頼
+- 方向：${from} → ${to}
+${modeRule}
+- 利用者：特定技能外国人の受入れ・支援を行う会社の日本人スタッフと、外国人本人
+
+# 通訳のルール
+1. 原文の意味を足さず、削らず、正確に訳す。数字・金額・日付・時間・回数・単位は原文どおりに保つ（円→ルピア・チャットなどの換算はしない）。
+2. 人名・会社名・住所などの固有名詞は推測で書き換えない。読み方が分からない場合はそのまま残し、注意点に書く。
+3. 「在留カード」「登録支援機関」「特定技能」「社会保険」など制度用語は、${to==="日本語"?"日本で一般的な正式名称":"相手に伝わる訳語を使い、必要に応じて（ ）で日本語の読みをローマ字で添える"}。
+4. 原文が曖昧・誤字がある・二通りに読める場合は、もっとも自然な解釈で訳し、別の解釈を注意点に書く。
+5. 法律や制度について、自分の意見や補足説明は訳文に入れない。
+6. 賃金・時間・控除・休日の言い回しは特に慎重に訳し、誤解されやすい点を注意点に書く。
+7. 相談・苦情や体調の話は、相手の気持ちに配慮した丁寧な訳にする。
+
+# 出力
+次のJSONだけを返す。
+{
+  "translation": "${to}の訳文",
+  "back_translation": "${dir==="ja2fg"?"訳文を日本語に戻した文（伝わる意味の確認用）":"原文をできるだけ直訳に近く日本語にした文"}",
+  "notes": ["日本人スタッフ向けに日本語で、確認してほしい点を短く。なければ空配列"]
+}
+
+# 原文（${from}）
+${text}`;
+}
+async function translate(mode, dir, text){
+  if (!text || S.busy) return null;
+  if (!sample){ $("note").textContent = "通訳社員と接続できていません。claude.ai にサインインして開き直してください。"; return null; }
+  const st = STAFF[S.staff];
+  const history = mode==="talk" ? S.entries.filter(e => e.mode==="talk" && e.staff===S.staff && e.out).slice(-4).map(e => (e.dir==="ja2fg" ? "日本人：" + e.src : "外国人：" + e.out)).join("\n") : "";
+  const en = {mode, staff:S.staff, dir, scene:S.scene, src:text, out:"", back:"", notes:[], time:new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})};
+  S.entries.push(en); S.busy = true; S.ctl = new AbortController();
+  const status = mode==="ex" ? $("exStatus") : $("talkStatus");
+  status.textContent = `${st.name}が通訳しています…`; render();
+  try{
+    const r = await sample.json(buildPrompt(st, mode, dir, S.scene, text, history), {signal:S.ctl.signal, modelTier: mode==="ex" ? "default" : "quick", cache:false});
+    en.out = String(r?.translation ?? "").trim();
+    en.back = String(r?.back_translation ?? "").trim();
+    en.notes = Array.isArray(r?.notes) ? r.notes.map(String).filter(Boolean) : [];
+    if (!en.out) en.err = "訳文が空でした。もう一度お試しください。";
+    status.textContent = "";
+  }catch(e){ en.err = errText(e); status.textContent = ""; }
+  finally{ S.busy = false; render(); }
+  return en;
+}
+
+/* 説明モード */
+$("exMic").onclick = () => startRec("exSrc", $("exMic"), S.exDir==="ja2fg" ? "ja-JP" : STAFF[S.staff].sr, true, null);
+$("exGo").onclick = async () => {
+  if (rec && rec.target==="exSrc"){ stopRec(); await new Promise(r => setTimeout(r, 400)); }
+  const t = $("exSrc").value.trim(); if (!t) { $("exStatus").textContent = "説明を話すか入力してください。"; return; }
+  const en = await translate("ex", S.exDir, t);
+  if (en && en.out && !en.err) $("exSrc").value = "";
+};
+$("exStop").onclick = () => S.ctl?.abort();
+$("exSrc").addEventListener("keydown", e => { if ((e.ctrlKey||e.metaKey) && e.key==="Enter"){ e.preventDefault(); $("exGo").click(); } });
+
+/* 会話モード */
+async function talkGo(side){
+  const ta = side==="ja" ? $("tJa") : $("tFg");
+  const t = ta.value.trim(); if (!t) return;
+  const dir = side==="ja" ? "ja2fg" : "fg2ja";
+  const en = await translate("talk", dir, t);
+  if (en && en.out && !en.err){
+    ta.value = "";
+    const st = STAFF[en.staff];
+    showBig(en.out, dir==="ja2fg" && st.key==="mm");
+    if ($("autoSpeak").checked) speak(en.out, dir==="ja2fg" ? st.tts : "ja-JP");
+  }
+}
+$("tJaMic").onclick = () => startRec("tJa", $("tJaMic"), "ja-JP", false, () => talkGo("ja"));
+$("tFgMic").onclick = () => startRec("tFg", $("tFgMic"), STAFF[S.staff].sr, false, () => talkGo("fg"));
+$("tJaGo").onclick = () => talkGo("ja");
+$("tFgGo").onclick = () => talkGo("fg");
+["tJa","tFg"].forEach(id => $(id).addEventListener("keydown", e => { if ((e.ctrlKey||e.metaKey) && e.key==="Enter"){ e.preventDefault(); talkGo(id==="tJa"?"ja":"fg"); } }));
+
+$("btnClear").onclick = () => { S.entries = []; $("bigOut").hidden = true; try{ speechSynthesis.cancel(); }catch{} render(); };
+try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; }catch{}
+render();
+})();
+</script>
