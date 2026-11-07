@@ -94,6 +94,38 @@ textarea{width:100%;min-height:110px;font:inherit;color:var(--fg);background:var
 .entry .notes{padding:8px 12px;font-size:.84rem;display:grid;gap:4px;border-top:1px solid var(--line)}
 .entry .notes div{border-left:3px solid var(--warn);padding-left:8px}
 .notice{background:var(--sunk);border-radius:8px;padding:10px 14px;font-size:.82rem;color:var(--muted)}
+
+/* この画面で音声通訳（Edgeの声＋Claudeの通訳） */
+.desk{gap:14px}
+.vstat{display:grid;gap:4px;font-size:.84rem;background:var(--sunk);border-radius:8px;padding:10px 12px}
+.vstat .ok{color:var(--fg)} .vstat .ng{color:var(--bad)}
+.dtabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line)}
+.dtabs button{border:1px solid transparent;border-bottom:none;background:transparent;color:var(--muted);padding:.45em 1em;border-radius:8px 8px 0 0;font-weight:700}
+.dtabs button[aria-selected="true"]{background:var(--c-soft);border-color:var(--line);color:var(--fg);margin-bottom:-1px}
+.dpanel{display:grid;gap:10px}
+.mic{font-size:1rem;padding:.75em 1em;border-radius:10px}
+.mic.on{background:var(--bad);border-color:var(--bad);color:#fff}
+.sides{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.sides{grid-template-columns:1fr}}
+.side{border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:8px;min-width:0}
+.side.jp{background:var(--jp);border-color:var(--jp-line)}
+.side.fg{background:var(--c-soft)}
+.side textarea{min-height:64px;margin-top:0}
+.interim{font-size:.86rem;color:var(--muted);min-height:1.4em}
+.big{font-size:1.45rem;line-height:1.65;padding:14px 16px;border-radius:10px;background:var(--surface);border:2px solid var(--c);white-space:pre-wrap;word-break:break-word}
+.big.my{line-height:2.1}
+.big small{display:block;font-size:.8rem;color:var(--muted);margin-bottom:4px}
+.dlog{display:grid;gap:8px}
+.dl{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;gap:2px}
+.dl .s{font-size:.82rem;color:var(--muted);white-space:pre-wrap;word-break:break-word}
+.dl .o{font-size:1rem;white-space:pre-wrap;word-break:break-word}
+.chat{display:grid;gap:8px;max-height:52vh;overflow-y:auto;padding:4px}
+.msg{max-width:88%;padding:8px 12px;border-radius:12px;white-space:pre-wrap;word-break:break-word;display:grid;gap:4px}
+.msg.su{background:var(--c-soft);justify-self:start}
+.msg.me{background:var(--jp);justify-self:end}
+.msg .ja{font-size:.84rem;color:var(--muted)}
+.msg .tip{font-size:.82rem;border-left:3px solid var(--warn);padding-left:8px}
+select{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:.35em .6em}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -111,7 +143,68 @@ textarea{width:100%;min-height:110px;font:inherit;color:var(--fg);background:var
     </div>
   </section>
 
-  <section aria-labelledby="modesTitle">
+  <section class="card desk" id="desk" hidden aria-labelledby="deskTitle">
+    <h2 id="deskTitle">仕事を頼む（この画面で音声通訳）</h2>
+    <div class="vstat" id="vstat"></div>
+    <div class="dtabs" role="tablist" id="dtabs">
+      <button type="button" role="tab" data-m="ex">説明モード</button>
+      <button type="button" role="tab" data-m="cv">会話モード</button>
+      <button type="button" role="tab" data-m="ls">会話練習</button>
+    </div>
+
+    <div class="dpanel" id="dEx">
+      <p class="small muted">日本語で話すと、区切りごとにすぐ<span class="Lname"></span>に通訳して、画面に大きく出して読み上げます。合図はいりません。相手が話すときは「相手が話す」を押してください。</p>
+      <div class="row" style="margin-top:0">
+        <button class="btn mic" id="exMic" type="button">🎙 日本語で説明を始める</button>
+        <button class="btn quiet mic" id="exReply" type="button"></button>
+      </div>
+      <p class="interim" id="exInterim" aria-live="polite"></p>
+      <label class="label" for="exText">マイクが使えないときは、ここに入力（キーボードの🎤音声入力も使えます）</label>
+      <textarea id="exText" style="min-height:64px;margin-top:0"></textarea>
+      <div class="row" style="margin-top:0"><button class="btn quiet" id="exGo" type="button">日本語 → <span class="Lname"></span>に通訳</button><button class="btn quiet" id="exGoR" type="button"><span class="Lname"></span> → 日本語に通訳</button></div>
+    </div>
+
+    <div class="dpanel" id="dCv" hidden>
+      <p class="small muted">話す人の側のボタンを押して話すと、話し終わったところですぐ相手の言語に通訳して読み上げます。</p>
+      <div class="sides">
+        <div class="side jp">
+          <b>🇯🇵 日本語</b>
+          <button class="btn mic" id="cvJaMic" type="button">🎙 日本語で話す</button>
+          <textarea id="cvJa" placeholder="入力してもOK"></textarea>
+          <button class="btn quiet" id="cvJaGo" type="button">訳す</button>
+        </div>
+        <div class="side fg">
+          <b id="cvFgTitle"></b>
+          <button class="btn mic" id="cvFgMic" type="button"></button>
+          <textarea id="cvFg"></textarea>
+          <button class="btn quiet" id="cvFgGo" type="button">訳す</button>
+        </div>
+      </div>
+      <p class="interim" id="cvInterim" aria-live="polite"></p>
+    </div>
+
+    <div class="dpanel" id="dLs" hidden>
+      <p class="small muted">あなた自身が<span class="Lname"></span>を練習します。<span id="lsWho"></span>が相手役になり、<span class="Lname"></span>で話しかけます。わからないときは日本語で聞いてください。最後に「講評」を押すと点数とアドバイスが出ます。</p>
+      <div class="row" style="margin-top:0">
+        <label class="small">場面 <select id="lsScene"></select></label>
+        <div class="seg" id="lsLevel"></div>
+      </div>
+      <div class="row" style="margin-top:0"><button class="btn" id="lsStart" type="button">練習を始める</button><button class="btn quiet" id="lsReview" type="button">講評をもらう</button></div>
+      <div class="chat" id="lsChat" aria-live="polite"></div>
+      <div class="row" style="margin-top:0">
+        <div class="seg" id="lsLang"></div>
+        <button class="btn mic" id="lsMic" type="button">🎙 話す</button>
+      </div>
+      <textarea id="lsText" style="min-height:56px;margin-top:0" placeholder="入力してもOK（Ctrl+Enterで送信）"></textarea>
+      <div class="row" style="margin-top:0"><button class="btn quiet" id="lsSend" type="button">送信</button></div>
+    </div>
+
+    <div class="big" id="dBig" hidden></div>
+    <p class="muted small" id="dNote" aria-live="polite"></p>
+    <div class="dlog" id="dLog"></div>
+  </section>
+
+  <section aria-labelledby="modesTitle" id="modesSec">
     <h2 id="modesTitle" style="margin-bottom:10px">仕事を頼む</h2>
     <div class="modes" id="modes"></div>
     <p class="muted small" style="margin-top:8px">ボタンを押すと音声通話が新しいタブで開きます。マイクの使用を許可してください。終わるときは「通訳終了」と言うか、タブを閉じてください。</p>
@@ -139,7 +232,8 @@ textarea{width:100%;min-height:110px;font:inherit;color:var(--fg);background:var
     <div class="log" id="log"></div>
   </details>
 
-  <p class="notice">通訳の音声通話はElevenLabsのサービスで動きます。通訳用の通話は音声を録音せず、会話の文字記録は7日で消える設定です。在留カード番号などの個人情報は、通訳に必要な場合だけ話してください。AIの通訳は補助です。雇用条件など重要な内容は、必要に応じて人の通訳者に確認してください。</p>
+  <p class="notice" id="deskNotice" hidden>この画面の通訳はClaude（AI）が行い、声はブラウザの読み上げ機能を使います。マイクで話した内容は、ブラウザの音声認識サービス（Edgeの場合はMicrosoft）に送られて文字になります。通訳の履歴はこのページを閉じると消えます。在留カード番号などの個人情報は、通訳に必要な場合だけ話してください。AIの通訳は補助です。雇用条件など重要な内容は、必要に応じて人の通訳者に確認してください。</p>
+  <p class="notice" id="elNotice">通訳の音声通話はElevenLabsのサービスで動きます。通訳用の通話は音声を録音せず、会話の文字記録は7日で消える設定です。在留カード番号などの個人情報は、通訳に必要な場合だけ話してください。AIの通訳は補助です。雇用条件など重要な内容は、必要に応じて人の通訳者に確認してください。</p>
 </div>
 
 <script>
@@ -244,5 +338,219 @@ ${text}`, {modelTier:"default", cache:false});
 $("go").onclick = go;
 $("src").addEventListener("keydown", e => { if ((e.ctrlKey||e.metaKey) && e.key==="Enter"){ e.preventDefault(); go(); } });
 renderDir();
+
+/* ===== この画面で音声通訳（P.desk のとき） ===== */
+if (P.desk){
+  $("desk").hidden = false; $("modesSec").hidden = true; $("textBox").hidden = true;
+  $("deskNotice").hidden = false; $("elNotice").hidden = true;
+  const D = P.desk, LN = P.lang, MY = !!P.my;
+  document.querySelectorAll(".Lname").forEach(e => e.textContent = LN);
+  $("exReply").textContent = `🎙 相手が話す（${LN}）`;
+  $("cvFgTitle").textContent = `${P.flag} ${LN}（${D.native}）`;
+  $("cvFgMic").textContent = `🎙 ${LN}で話す`;
+  $("cvFg").placeholder = "入力してもOK";
+  $("lsWho").textContent = P.short;
+  [$("cvFg")].forEach(t => t.classList.toggle("my", MY));
+
+  /* 声 */
+  let fgVoice = null, jaVoice = null;
+  const isEdge = /Edg\//.test(navigator.userAgent);
+  function findVoices(){
+    let vs = []; try { vs = speechSynthesis.getVoices() || []; } catch {}
+    fgVoice = vs.find(v => v.lang && v.lang.toLowerCase().startsWith(D.tts.slice(0,2)) ) || vs.find(v => new RegExp(D.voiceHint, "i").test(v.name)) || null;
+    jaVoice = vs.find(v => /^ja/i.test(v.lang) && /Nanami|Natural|Online/i.test(v.name)) || vs.find(v => /^ja/i.test(v.lang)) || null;
+    renderStat();
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  function renderStat(){
+    const el = $("vstat"); el.textContent = "";
+    const line = (ok, txt) => { const p = document.createElement("div"); p.className = ok ? "ok" : "ng"; p.textContent = (ok ? "✅ " : "⚠️ ") + txt; el.appendChild(p); };
+    line(!!fgVoice, fgVoice ? `${LN}の声：${fgVoice.name}（読み上げできます）` : `${LN}の声：この端末・ブラウザでは見つかりません。訳は画面に文字で出します。${isEdge ? "" : "Microsoft Edge で開くと使える場合があります。"}`);
+    line(!!jaVoice, jaVoice ? `日本語の声：${jaVoice.name}` : "日本語の声：見つかりません（文字だけ表示します）");
+    line(!!SR, SR ? "音声入力：使えます（🎙を押すとマイクの許可を確認します）" : "音声入力：このブラウザは非対応です。入力欄でキーボードの🎤音声入力を使ってください。");
+    const r = document.createElement("div");
+    const t = document.createElement("button"); t.type = "button"; t.className = "btn quiet"; t.textContent = `${LN}の声をテスト`;
+    t.onclick = () => { if (!speak(D.testLine, "fg")) note(`${LN}の声が見つからないため読み上げできません。`); };
+    r.appendChild(t); el.appendChild(r);
+  }
+  try { speechSynthesis.onvoiceschanged = findVoices; } catch {}
+  findVoices(); setTimeout(findVoices, 800); setTimeout(findVoices, 2500);
+  function speak(text, side){
+    try{
+      const v = side === "fg" ? fgVoice : jaVoice;
+      if (!v) return false;
+      const u = new SpeechSynthesisUtterance(text.replace(/\[[^\]]*\]/g, ""));
+      u.voice = v; u.lang = v.lang; u.rate = side === "fg" ? 0.95 : 1.05;
+      speechSynthesis.speak(u); return true;
+    }catch{ return false; }
+  }
+  const note = t => { $("dNote").textContent = t; };
+
+  /* 音声入力 */
+  let active = null;
+  function stopActive(){ if (active){ active.stop(); active = null; } }
+  function listen(lang, {continuous, onFinal, btn, label, interimEl}){
+    if (!SR){ note("このブラウザは音声入力に対応していません。入力欄でキーボードの🎤音声入力を使ってください。"); return; }
+    if (active && active.btn === btn){ stopActive(); return; }
+    stopActive();
+    const r = new SR(); r.lang = lang; r.continuous = !!continuous; r.interimResults = true;
+    let keep = !!continuous;
+    const h = {btn, stop(){ keep = false; try { r.stop(); } catch {} }};
+    r.onresult = e => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++){
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal){ if (t.trim()) onFinal(t.trim()); } else interim += t;
+      }
+      if (interimEl) interimEl.textContent = interim ? "🎙 " + interim : "";
+    };
+    r.onerror = ev => {
+      if (["not-allowed","service-not-allowed","audio-capture"].includes(ev.error)){ keep = false; note("この画面ではマイクが使えませんでした。ブラウザのマイク許可を確認するか、入力欄でキーボードの🎤音声入力を使ってください。"); }
+      else if (ev.error === "language-not-supported"){ keep = false; note(`このブラウザは${lang.startsWith("ja") ? "日本語" : LN}の音声入力に対応していません。入力欄に文字で入力してください。`); }
+    };
+    r.onend = () => {
+      if (keep && active === h){ try { r.start(); return; } catch {} }
+      if (active === h) active = null;
+      btn.classList.remove("on"); btn.textContent = label;
+      if (interimEl) interimEl.textContent = "";
+    };
+    try { r.start(); active = h; btn.classList.add("on"); btn.textContent = "⏹ 聞いています（押すと止まる）"; }
+    catch { note("音声入力を始められませんでした。入力欄を使ってください。"); }
+  }
+
+  /* 通訳 */
+  let chain = Promise.resolve();
+  const logs = [];
+  function showBig(text, isFg, srcText){
+    const b = $("dBig"); b.hidden = false; b.textContent = "";
+    const s = document.createElement("small"); s.textContent = srcText; b.appendChild(s);
+    b.appendChild(document.createTextNode(text)); b.classList.toggle("my", isFg && MY);
+  }
+  function renderLogs(){
+    const el = $("dLog"); el.textContent = "";
+    logs.slice(-30).reverse().forEach(l => {
+      const d = document.createElement("div"); d.className = "dl";
+      const s = document.createElement("div"); s.className = "s" + (l.dir === "fg2ja" && MY ? " my" : ""); s.textContent = l.src;
+      const o = document.createElement("div"); o.className = "o" + (l.dir === "ja2fg" && MY ? " my" : ""); o.textContent = l.out;
+      d.append(s, o); el.appendChild(d);
+    });
+  }
+  function interp(text, dir){
+    if (!text) return;
+    chain = chain.then(async () => {
+      if (!sample){ note("通訳のAIと接続できていません。claude.ai にサインインして開き直してください。"); return; }
+      const from = dir === "ja2fg" ? "日本語" : LN, to = dir === "ja2fg" ? LN : "日本語";
+      note(`${P.short}が通訳しています…`);
+      try{
+        const r = await sample(`${P.persona}
+あなたはプロの逐次通訳者です。次の${from}を、すぐ${to}に通訳してください。
+- 訳文だけを出力する。説明・前置き・引用符・注釈は書かない。
+- 「えー」「あの」「えっと」などのつなぎ言葉や言い直しは訳さない。意味を足さず削らない。
+- 数字・金額・日付・時間・固有名詞は原文どおり（円を換算しない）。
+${to === "日本語" ? "- 丁寧な です・ます で。" : D.style}
+原文：
+${text}`, {modelTier:"quick", cache:false});
+        const out = String(r?.text ?? "").trim();
+        if (!out){ note("訳文が空でした。もう一度お願いします。"); return; }
+        logs.push({src:text, out, dir}); renderLogs();
+        const toFg = dir === "ja2fg";
+        showBig(out, toFg, text);
+        const spoke = speak(out, toFg ? "fg" : "ja");
+        note(spoke || !toFg ? "" : `${LN}の声がないため、画面の文字を相手に見せてください。`);
+      }catch(e){
+        note(e && e.code === "rate_limited" ? "利用が集中しています。少し待ってからもう一度お願いします。" : "通訳できませんでした。もう一度お願いします。");
+      }
+    });
+  }
+
+  /* 説明モード */
+  $("exMic").onclick = () => listen("ja-JP", {continuous:true, onFinal: t => interp(t, "ja2fg"), btn:$("exMic"), label:"🎙 日本語で説明を始める", interimEl:$("exInterim")});
+  $("exReply").onclick = () => listen(D.sr, {continuous:false, onFinal: t => interp(t, "fg2ja"), btn:$("exReply"), label:`🎙 相手が話す（${LN}）`, interimEl:$("exInterim")});
+  $("exGo").onclick = () => { const t = $("exText").value.trim(); if (t){ $("exText").value = ""; interp(t, "ja2fg"); } };
+  $("exGoR").onclick = () => { const t = $("exText").value.trim(); if (t){ $("exText").value = ""; interp(t, "fg2ja"); } };
+
+  /* 会話モード */
+  $("cvJaMic").onclick = () => listen("ja-JP", {continuous:false, onFinal: t => interp(t, "ja2fg"), btn:$("cvJaMic"), label:"🎙 日本語で話す", interimEl:$("cvInterim")});
+  $("cvFgMic").onclick = () => listen(D.sr, {continuous:false, onFinal: t => interp(t, "fg2ja"), btn:$("cvFgMic"), label:`🎙 ${LN}で話す`, interimEl:$("cvInterim")});
+  $("cvJaGo").onclick = () => { const t = $("cvJa").value.trim(); if (t){ $("cvJa").value = ""; interp(t, "ja2fg"); } };
+  $("cvFgGo").onclick = () => { const t = $("cvFg").value.trim(); if (t){ $("cvFg").value = ""; interp(t, "fg2ja"); } };
+
+  /* 会話練習 */
+  const SCENES = ["あいさつと自己紹介","食堂で注文する","市場での買い物","タクシー・道を聞く","病院・薬局","特定技能の面接","職場の指示・安全の説明","寮のルール説明","フリートーク（自由に会話）"];
+  const LEVELS = [["easy","はじめて"],["normal","ふつう"],["hard","むずかしい"]];
+  const LS = {level:"easy", lang:"fg", hist:[], busy:false};
+  SCENES.forEach(s => { const o = document.createElement("option"); o.textContent = s; $("lsScene").appendChild(o); });
+  function seg(el, items, cur, on){ el.textContent = ""; items.forEach(([id,l]) => { const b = document.createElement("button"); b.type = "button"; b.textContent = l; b.setAttribute("aria-pressed", String(cur()===id)); b.onclick = () => { on(id); seg(el, items, cur, on); }; el.appendChild(b); }); }
+  seg($("lsLevel"), LEVELS, () => LS.level, v => LS.level = v);
+  seg($("lsLang"), [["fg",`${LN}で話す`],["ja","日本語で聞く"]], () => LS.lang, v => LS.lang = v);
+  function addMsg(who, main, ja, tip){
+    const m = document.createElement("div"); m.className = "msg " + who;
+    const a = document.createElement("div"); a.textContent = main; if (who === "su" && MY) a.className = "my"; m.appendChild(a);
+    if (ja){ const j = document.createElement("div"); j.className = "ja"; j.textContent = ja; m.appendChild(j); }
+    if (tip){ const t = document.createElement("div"); t.className = "tip"; t.textContent = tip; m.appendChild(t); }
+    $("lsChat").appendChild(m); $("lsChat").scrollTop = $("lsChat").scrollHeight;
+  }
+  function lessonRules(){
+    const lv = {easy:"はじめて：とても短く簡単な文。毎回必ず日本語訳を付ける。", normal:"ふつう：自然な日常会話。日本語訳は付けるが短く。", hard:"むずかしい：自然な速さ。日本語訳は空にしてよい（学習者が日本語で聞いたときだけ付ける）。"}[LS.level];
+    return `${P.persona}
+今はあなたが先生役で、日本人スタッフが${LN}の会話を練習します。ロールプレイの相手役をしてください。
+- 場面：${$("lsScene").value}
+- レベル：${lv}
+- 毎回、${LN}で1〜2文だけ話し、たいてい質問で終えて学習者に答えさせる。
+- 学習者の${LN}に間違いや不自然な点があれば、tip に日本語で短く直し方と正しい言い方を書く。良ければほめる。
+- 学習者が日本語で質問したら（意味・言い方など）、tip に日本語で答え、burmese には続きの簡単な一言を書く。
+- ${D.style}
+- 実在の人の個人情報は聞かない。架空の名前を使う。制度・給料などを事実として断定しない。
+次のJSONだけを返す：{"burmese":"${LN}のせりふ","japanese":"その日本語訳（レベルに従う）","tip":"日本語のアドバイス。なければ空文字"}`;
+  }
+  async function lsReply(){
+    if (!sample){ note("AIと接続できていません。claude.ai にサインインして開き直してください。"); return; }
+    LS.busy = true; note(`${P.short}が考えています…`);
+    try{
+      const r = await sample.json(LS.hist, {modelTier:"default", cache:false});
+      const b = String(r?.burmese ?? "").trim(), j = String(r?.japanese ?? "").trim(), tip = String(r?.tip ?? "").trim();
+      LS.hist.push({role:"assistant", content: JSON.stringify({burmese:b, japanese:j, tip})});
+      addMsg("su", b, j, tip); note("");
+      if (b && !speak(b, "fg")) note(`${LN}の声がないため、文字で読んでください。`);
+    }catch(e){ LS.hist.pop(); note("返事を受け取れませんでした。もう一度送ってください。"); }
+    finally{ LS.busy = false; }
+  }
+  $("lsStart").onclick = () => {
+    if (LS.busy) return;
+    $("lsChat").textContent = "";
+    LS.hist = [{role:"user", content: lessonRules() + "\n\n（練習開始。相手役として最初の一言をどうぞ）"}];
+    lsReply();
+  };
+  function lsSend(text){
+    if (!text || LS.busy) return;
+    if (!LS.hist.length){ note("先に「練習を始める」を押してください。"); return; }
+    addMsg("me", text);
+    LS.hist.push({role:"user", content: text});
+    lsReply();
+  }
+  $("lsSend").onclick = () => { const t = $("lsText").value.trim(); $("lsText").value = ""; lsSend(t); };
+  $("lsText").addEventListener("keydown", e => { if ((e.ctrlKey||e.metaKey) && e.key === "Enter"){ e.preventDefault(); $("lsSend").click(); } });
+  $("lsMic").onclick = () => listen(LS.lang === "fg" ? D.sr : "ja-JP", {continuous:false, onFinal: t => lsSend(t), btn:$("lsMic"), label:"🎙 話す", interimEl:null});
+  $("lsReview").onclick = async () => {
+    if (LS.busy || LS.hist.length < 3 || !sample){ note("少し会話してから講評を押してください。"); return; }
+    LS.busy = true; note("講評を作っています…");
+    const tr = LS.hist.slice(1).map(m => (m.role === "user" ? "学習者：" + m.content : `${P.short}：` + (() => { try { return JSON.parse(m.content).burmese; } catch { return m.content; } })())).join("\n");
+    try{
+      const r = await sample(`あなたは${LN}の先生です。次の会話練習を日本語で講評してください。100点満点の点数、良かった点2つ（学習者の${LN}を引用）、直すとよい点2〜3つ（正しい${LN}付き）、次に練習するとよい表現2つ（日本語訳付き）。短く読みやすく。\n\n${tr}`, {modelTier:"default", cache:false});
+      addMsg("su", String(r?.text ?? "").trim() || "講評を作れませんでした。"); note("");
+    }catch{ note("講評を受け取れませんでした。"); }
+    finally{ LS.busy = false; }
+  };
+
+  /* タブ */
+  function tab(m){
+    stopActive();
+    document.querySelectorAll("#dtabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.m === m)));
+    $("dEx").hidden = m !== "ex"; $("dCv").hidden = m !== "cv"; $("dLs").hidden = m !== "ls";
+    $("dBig").hidden = m === "ls" || !logs.length; $("dLog").hidden = m === "ls";
+  }
+  document.querySelectorAll("#dtabs button").forEach(b => b.onclick = () => tab(b.dataset.m));
+  tab("ex");
+}
 })();
 </script>
