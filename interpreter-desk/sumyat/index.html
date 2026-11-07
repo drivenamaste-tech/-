@@ -1,0 +1,248 @@
+<title>通訳 スー・ミャット・ノー</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+Myanmar:wght@400;700&display=swap">
+<style>
+/* Layout: 上に本人の名刺（写真・今の様子）、次に通訳3モードのボタン、下にプロフィール（趣味・1日の過ごし方）と文字での通訳。 */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --sunk:#e7ecea; --line:#d0d9d6;
+  --fg:#18231f; --muted:#56655f; --c:#8a5d00; --c-soft:#f7ecd2; --c-fg:#ffffff;
+  --sleep:#c9d3e6; --rest:#f1dfb3; --work:#e9c66f; --jp:#e9eef6; --jp-line:#cbd6e6; --warn:#9a5f08; --bad:#b0362a;
+  --f-display:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+  --f-my:"Noto Sans Myanmar","Myanmar Text","Padauk",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111715; --surface:#19211e; --sunk:#222c28; --line:#34423d;
+  --fg:#e6ece9; --muted:#9aaaa3; --c:#e7b54a; --c-soft:#3a2f17; --c-fg:#16110c;
+  --sleep:#2c3850; --rest:#4a3d22; --work:#7a5d1d; --jp:#1e2733; --jp-line:#334256; --warn:#e0a54a; --bad:#ef7d70; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111715; --surface:#19211e; --sunk:#222c28; --line:#34423d;
+  --fg:#e6ece9; --muted:#9aaaa3; --c:#e7b54a; --c-soft:#3a2f17; --c-fg:#16110c;
+  --sleep:#2c3850; --rest:#4a3d22; --work:#7a5d1d; --jp:#1e2733; --jp-line:#334256; --warn:#e0a54a; --bad:#ef7d70; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.7;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:900px;margin:0 auto;padding-block:16px 40px;display:grid;gap:18px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.35}
+h2{font-size:1.1rem}
+p{margin:0}
+.muted{color:var(--muted)} .small{font-size:.84rem}
+.label{font-size:.74rem;letter-spacing:.08em;color:var(--muted);font-weight:700}
+button{font:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+.btn{border:1px solid var(--c);background:var(--c);color:var(--c-fg);border-radius:8px;padding:.5em 1.1em;font-weight:700}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.quiet{background:transparent;border-color:var(--line);color:var(--fg);font-weight:400;padding:.3em .8em;font-size:.84rem}
+.back{justify-self:start}
+
+/* 名刺 */
+.hero{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:var(--c)}
+.hero img{width:112px;height:112px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--c)}
+.hero h1{font-size:1.7rem;font-weight:900;letter-spacing:.03em}
+.hero .native{font-size:.9rem;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{font-size:.76rem;border-radius:999px;padding:.1em .7em;background:var(--c-soft);color:var(--fg);font-weight:700}
+.now{margin-top:8px;font-size:.9rem;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.now b{font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.dot.work{background:var(--c)} .dot.rest{background:#d39b2a} .dot.sleep{background:#6c7fa8}
+@media (max-width:520px){.hero{grid-template-columns:1fr;text-align:left}.hero img{width:88px;height:88px}}
+
+/* モード */
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.mode{display:grid;gap:8px;align-content:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.mode h3{font-size:1.05rem}
+.mode .go{display:block;text-decoration:none;text-align:center;border-radius:10px;padding:.75em 1em;background:var(--c);color:var(--c-fg);font-weight:700;margin-top:auto}
+.mode .go small{display:block;font-weight:400;font-size:.74rem;opacity:.9}
+.mode ul{margin:0;padding-left:1.1em;font-size:.86rem;color:var(--muted)}
+.mode.lesson .go{background:transparent;color:var(--c);border:1.5px solid var(--c)}
+
+/* プロフィール */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px;min-width:0}
+dl.prof{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;font-size:.92rem}
+dl.prof dt{color:var(--muted);white-space:nowrap}
+dl.prof dd{margin:0}
+.day{display:grid;gap:6px}
+.bar{display:flex;height:26px;border-radius:6px;overflow:hidden;border:1px solid var(--line);position:relative}
+.bar span{height:100%}
+.bar .sleep{background:var(--sleep)} .bar .rest{background:var(--rest)} .bar .work{background:var(--work)}
+.bar i{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg)}
+.ticks{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.sched{display:grid;gap:2px;font-size:.86rem}
+.sched div{display:grid;grid-template-columns:8.6em minmax(0,1fr);gap:8px;padding:3px 6px;border-radius:6px}
+.sched div.cur{background:var(--c-soft);font-weight:700}
+.sched b{font-variant-numeric:tabular-nums;font-weight:400;color:var(--muted)}
+
+/* 文字で通訳 */
+details.text{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+details.text summary{cursor:pointer;font-weight:700;font-family:var(--f-display)}
+details.text[open] summary{margin-bottom:10px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:.3em .9em;font-size:.86rem}
+.seg button[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:var(--c-fg)}
+textarea{width:100%;min-height:110px;font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;resize:vertical;margin-top:8px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-top:8px}
+.my{font-family:var(--f-my);line-height:2}
+.log{display:grid;gap:10px;margin-top:12px}
+.entry{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.entry .src{padding:8px 12px;font-size:.88rem;color:var(--muted);white-space:pre-wrap;word-break:break-word;border-bottom:1px dashed var(--line)}
+.entry .out{padding:10px 12px;font-size:1.05rem;white-space:pre-wrap;word-break:break-word}
+.entry .back2{padding:8px 12px;font-size:.84rem;background:var(--jp);border-top:1px solid var(--jp-line);white-space:pre-wrap}
+.entry .notes{padding:8px 12px;font-size:.84rem;display:grid;gap:4px;border-top:1px solid var(--line)}
+.entry .notes div{border-left:3px solid var(--warn);padding-left:8px}
+.notice{background:var(--sunk);border-radius:8px;padding:10px 14px;font-size:.82rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <button type="button" class="btn quiet back" id="ai-back" hidden>← AI社員一覧へ</button>
+
+  <section class="hero" aria-label="プロフィール">
+    <img id="photo" alt="">
+    <div>
+      <p class="label">登録支援機関部・通訳</p>
+      <h1 id="name"></h1>
+      <p class="native" id="native"></p>
+      <div class="chips" id="chips"></div>
+      <p class="now" id="now"></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="modesTitle">
+    <h2 id="modesTitle" style="margin-bottom:10px">仕事を頼む</h2>
+    <div class="modes" id="modes"></div>
+    <p class="muted small" style="margin-top:8px">ボタンを押すと音声通話が新しいタブで開きます。マイクの使用を許可してください。終わるときは「通訳終了」と言うか、タブを閉じてください。</p>
+  </section>
+
+  <section class="card" aria-labelledby="profTitle">
+    <h2 id="profTitle">プロフィール</h2>
+    <dl class="prof" id="prof"></dl>
+    <div class="day">
+      <p class="label">1日の過ごし方（現地時間）</p>
+      <div class="bar" id="bar" aria-hidden="true"></div>
+      <div class="ticks"><span>0時</span><span>6時</span><span>12時</span><span>18時</span><span>24時</span></div>
+      <div class="sched" id="sched"></div>
+    </div>
+  </section>
+
+  <details class="text" id="textBox">
+    <summary>文字で通訳する（声が使えないとき）</summary>
+    <div class="seg" id="dir"></div>
+    <textarea id="src"></textarea>
+    <div class="row">
+      <button class="btn" id="go" type="button">通訳する</button>
+      <span class="muted small" id="st" aria-live="polite"></span>
+    </div>
+    <div class="log" id="log"></div>
+  </details>
+
+  <p class="notice">通訳の音声通話はElevenLabsのサービスで動きます。通訳用の通話は音声を録音せず、会話の文字記録は7日で消える設定です。在留カード番号などの個人情報は、通訳に必要な場合だけ話してください。AIの通訳は補助です。雇用条件など重要な内容は、必要に応じて人の通訳者に確認してください。</p>
+</div>
+
+<script>
+(() => {
+const P = {"name": "スー・ミャット・ノー", "short": "スー", "native": "Su Myat Noe（စုမြတ်နိုး）／ ミャンマー語通訳", "img": "data:image/jpeg;base64,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", "flag": "🇲🇲", "city": "ヤンゴン", "tz": "Asia/Yangon", "lang": "ミャンマー語", "my": true, "chips": ["🇲🇲 ミャンマー出身", "女性", "日本語 ⇄ ミャンマー語", "Lv.6"], "prof": [["所属", "登録支援機関部・通訳"], ["出身", "ミャンマー・ヤンゴン"], ["担当", "ミャンマー語の通訳（説明・面談・生活の相談）と、日本人スタッフ向けのミャンマー語レッスン"], ["趣味", "とにかくお金が大好き。毎朝の為替レート（チャットと円）のチェックと家計簿が日課で、ポイント還元やセールにはだれよりも詳しい。好物はモヒンガー。"], ["性格", "やさしく丁寧。お金の話になると急に目が輝く。通訳では言われたことをそのまま正確に伝える。"]], "day": [[0, 5.5, "sleep", "睡眠"], [5.5, 6.5, "rest", "朝のお参りと為替レートのチェック"], [6.5, 11, "work", "通訳（生活オリエンテーション・相談）"], [11, 12, "rest", "昼ごはん（モヒンガー）と家計簿つけ"], [12, 15.5, "work", "通訳と会話レッスン"], [15.5, 17, "rest", "お得なセール・ポイント還元の調査"], [17, 19, "rest", "貯金額を数えてにっこり"], [19, 21, "rest", "家族とおしゃべり（話題はだいたいお金）"], [21, 24, "sleep", "睡眠（夢の中でも貯金中）"]], "persona": "あなたは株式会社FLYYOU（登録支援機関）のAI社員「スー・ミャット・ノー」です。ミャンマー出身の女性の通訳担当という設定です。ミャンマー語は丁寧な話し言葉で、女性の話し手として自然な文末を使います。", "modes": [{"key": "ex", "title": "説明モード", "desc": "日本人スタッフの説明を、話したそばからミャンマー語にすぐ通訳します。合図や確認は不要です。", "points": ["雇用条件・生活ルール・手続の説明に", "話した日本語をすぐミャンマー語に", "相手が話したら日本語に通訳"], "button": "🎙 説明モードで通訳", "url": "https://elevenlabs.io/app/talk-to?agent_id=agent_9501m6trzhn4e0wv01xwmdnysscb"}, {"key": "cv", "title": "会話モード", "desc": "目の前のミャンマー人と交互に話すとき用。日本語はミャンマー語に、ミャンマー語は日本語に、すばやく通訳します。", "points": ["面談・相談・ちょっとしたやりとりに", "通訳したら黙って次の発言を待つ", "スピード重視の短い訳"], "button": "🎙 会話モードで通訳", "url": "https://elevenlabs.io/app/talk-to?agent_id=agent_7301m6trzj62etcrw0mrkz680r51"}, {"key": "lesson", "title": "会話練習", "desc": "あなた自身がミャンマー語を練習します。場面とレベルを選んでロールプレイ。最後に点数と講評。", "points": ["あいさつ・食堂・買い物・面接など", "わからないときは日本語で質問OK", "「フリートーク」で自由会話"], "button": "🗣 ミャンマー語を練習", "url": "https://elevenlabs.io/app/talk-to?agent_id=agent_9501m6tr83xbeqcvkk6faf8tmga8"}]};
+const $ = id => document.getElementById(id);
+const ss = k => { try { return sessionStorage.getItem(k); } catch { return null; } };
+const inHub = typeof window.__HUB !== "undefined";
+
+/* AI社員一覧へ戻る（FLYYOU総合の中で開いたときだけ） */
+(function(){
+  const b = $("ai-back"); if (!inHub) return; b.hidden = false;
+  if (ss("hub.from") === "org"){ b.textContent = "← 組織図に戻る"; b.onclick = () => { try{ sessionStorage.removeItem("hub.from"); sessionStorage.setItem("hub.app","org"); sessionStorage.removeItem("hub.goto"); }catch{} location.reload(); }; return; }
+  b.onclick = () => { try{ sessionStorage.removeItem("hub.from"); }catch{} const h = window.__HUB; if (h && h.toMenu) h.toMenu(); else { try{ sessionStorage.setItem("hub.view","ai"); sessionStorage.removeItem("hub.app"); }catch{} location.reload(); } };
+})();
+
+/* 名刺 */
+$("photo").src = P.img;
+$("name").textContent = P.name;
+$("native").textContent = P.native;
+P.chips.forEach(t => { const s = document.createElement("span"); s.className = "chip"; s.textContent = t; $("chips").appendChild(s); });
+
+/* モード */
+P.modes.forEach(m => {
+  const d = document.createElement("article"); d.className = "mode" + (m.key==="lesson" ? " lesson" : "");
+  const h = document.createElement("h3"); h.textContent = m.title;
+  const p = document.createElement("p"); p.className = "small"; p.textContent = m.desc;
+  const ul = document.createElement("ul"); m.points.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+  const a = document.createElement("a"); a.className = "go"; a.href = m.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+  a.textContent = m.button; const sm = document.createElement("small"); sm.textContent = "音声通話（新しいタブ）"; a.appendChild(sm);
+  d.append(h, p, ul, a); $("modes").appendChild(d);
+});
+
+/* プロフィール */
+P.prof.forEach(([k,v]) => { const dt = document.createElement("dt"); dt.textContent = k; const dd = document.createElement("dd"); dd.textContent = v; $("prof").append(dt, dd); });
+const fmt = h => { const H = Math.floor(h), M = Math.round((h-H)*60); return `${H}:${String(M).padStart(2,"0")}`; };
+P.day.forEach(([a,b,kind,what]) => {
+  const s = document.createElement("span"); s.className = kind; s.style.width = ((b-a)/24*100)+"%"; s.title = `${fmt(a)}〜${fmt(b)} ${what}`; $("bar").appendChild(s);
+  const r = document.createElement("div"); r.dataset.a = a; r.dataset.b = b;
+  const t = document.createElement("b"); t.textContent = `${fmt(a)}〜${fmt(b)}`; const w = document.createElement("span"); w.textContent = what;
+  r.append(t, w); $("sched").appendChild(r);
+});
+const marker = document.createElement("i"); $("bar").appendChild(marker);
+const LABEL = {work:"仕事中", rest:"休けい中", sleep:"睡眠中"};
+function tick(){
+  let h = 0, txt = "";
+  try{
+    const parts = new Intl.DateTimeFormat("ja-JP",{timeZone:P.tz,hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date());
+    const H = +parts.find(p=>p.type==="hour").value, M = +parts.find(p=>p.type==="minute").value;
+    h = H + M/60; txt = `${String(H).padStart(2,"0")}:${String(M).padStart(2,"0")}`;
+  }catch{ return; }
+  const cur = P.day.find(([a,b]) => h >= a && h < b) || P.day[0];
+  marker.style.left = (h/24*100)+"%";
+  document.querySelectorAll("#sched div").forEach(d => d.classList.toggle("cur", +d.dataset.a===cur[0]));
+  const now = $("now"); now.textContent = "";
+  const a = document.createElement("span"); a.textContent = `${P.flag} ${P.city}は今 `; const b = document.createElement("b"); b.textContent = txt; a.appendChild(b);
+  const c = document.createElement("span"); const dot = document.createElement("span"); dot.className = "dot " + cur[2]; c.append(dot, document.createTextNode(`${LABEL[cur[2]]}：${cur[3]}`));
+  now.append(a, c);
+}
+tick(); setInterval(tick, 30000);
+
+/* 文字で通訳（Claude） */
+let sample = null, busy = false, dir = "ja2fg"; const entries = [];
+window.claude?.use?.("sample").then(s => { sample = s; if (!s) $("textBox").hidden = true; }).catch(() => { $("textBox").hidden = true; });
+function renderDir(){
+  const d = $("dir"); d.textContent = "";
+  [["ja2fg",`日本語 → ${P.lang}`],["fg2ja",`${P.lang} → 日本語`]].forEach(([id,l]) => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = l; b.setAttribute("aria-pressed", String(dir===id));
+    b.onclick = () => { dir = id; renderDir(); }; d.appendChild(b);
+  });
+  $("src").placeholder = dir==="ja2fg" ? "日本語を入力してください" : `${P.lang}を入力してください`;
+  $("src").classList.toggle("my", dir==="fg2ja" && P.my);
+}
+function renderLog(){
+  const el = $("log"); el.textContent = "";
+  entries.slice().reverse().forEach(en => {
+    const w = document.createElement("article"); w.className = "entry";
+    const s = document.createElement("div"); s.className = "src" + (en.dir==="fg2ja" && P.my ? " my" : ""); s.textContent = en.src;
+    const o = document.createElement("div"); o.className = "out" + (en.dir==="ja2fg" && P.my ? " my" : ""); o.textContent = en.err || en.out || "…";
+    w.append(s, o);
+    if (en.back){ const b = document.createElement("div"); b.className = "back2"; b.textContent = (en.dir==="ja2fg" ? "逆翻訳：" : "直訳に近い意味：") + en.back; w.appendChild(b); }
+    if (en.notes && en.notes.length){ const n = document.createElement("div"); n.className = "notes"; en.notes.forEach(x => { const d = document.createElement("div"); d.textContent = x; n.appendChild(d); }); w.appendChild(n); }
+    el.appendChild(w);
+  });
+}
+async function go(){
+  const text = $("src").value.trim(); if (!text || busy || !sample) return;
+  const from = dir==="ja2fg" ? "日本語" : P.lang, to = dir==="ja2fg" ? P.lang : "日本語";
+  const en = {dir, src:text}; entries.push(en); busy = true; $("go").disabled = true; $("st").textContent = `${P.short}が通訳しています…`; renderLog();
+  try{
+    const r = await sample.json(`${P.persona}
+次の${from}を${to}に通訳してください。意味を足さず削らず、数字・金額・日付・固有名詞は原文どおり。${P.my ? "ミャンマー語はUnicodeの標準的なビルマ文字で書く。" : ""}
+次のJSONだけを返す：{"translation":"${to}の訳文","back_translation":"${dir==="ja2fg"?"訳文を日本語に戻した文":"直訳に近い日本語"}","notes":["日本人スタッフ向けの確認点（日本語・短く）。なければ空配列"]}
+原文：
+${text}`, {modelTier:"default", cache:false});
+    en.out = String(r?.translation ?? "").trim(); en.back = String(r?.back_translation ?? "").trim();
+    en.notes = Array.isArray(r?.notes) ? r.notes.map(String).filter(Boolean) : [];
+    if (!en.out) en.err = "訳文が空でした。もう一度お試しください。"; else $("src").value = "";
+  }catch(e){ en.err = e && e.code==="rate_limited" ? "利用が集中しています。少し待ってからお試しください。" : "通訳結果を受け取れませんでした。もう一度お試しください。"; }
+  finally{ busy = false; $("go").disabled = false; $("st").textContent = ""; renderLog(); }
+}
+$("go").onclick = go;
+$("src").addEventListener("keydown", e => { if ((e.ctrlKey||e.metaKey) && e.key==="Enter"){ e.preventDefault(); go(); } });
+renderDir();
+})();
+</script>
